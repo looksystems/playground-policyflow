@@ -1,10 +1,10 @@
-# Policy Evaluator Implementation Plan
+# Policyflow Implementation Plan
 
 ## Status: Implemented
 
 ## Overview
 
-A generic policy evaluator that parses any markdown policy document, dynamically generates an evaluation workflow using PocketFlow, and evaluates input text using LiteLLM.
+Policyflow is a generic policy evaluation framework that parses any markdown policy document, dynamically generates an evaluation workflow using PocketFlow, and evaluates input text using LiteLLM.
 
 ## Tech Stack
 - **uv** - Python package management
@@ -19,7 +19,7 @@ A generic policy evaluator that parses any markdown policy document, dynamically
 ## Project Structure
 
 ```
-pocketflow/
+policyflow/
 ├── pyproject.toml
 ├── .env.example
 ├── README.md

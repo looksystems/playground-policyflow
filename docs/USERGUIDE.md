@@ -1,4 +1,4 @@
-# Policy Evaluator User Guide
+# Policyflow User Guide
 
 A generic policy evaluation tool that uses LLM-powered workflows to check if text satisfies policy criteria.
 
@@ -20,10 +20,10 @@ A generic policy evaluation tool that uses LLM-powered workflows to check if tex
 
 ```bash
 # Using uv (recommended)
-uv add policyflowuator
+uv add policyflow
 
 # Using pip
-pip install policyflowuator
+pip install policyflow
 ```
 
 ### Requirements
