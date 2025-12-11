@@ -43,12 +43,12 @@ policy-eval parse-two-step --policy policy.md --output-dir ./output/
 ### Python API
 
 ```python
-from policy_evaluator.parser import (
+from policyflow.parser import (
     normalize_policy,
     generate_workflow_from_normalized,
     parse_policy_two_step,
 )
-from policy_evaluator.models import NormalizedPolicy
+from policyflow.models import NormalizedPolicy
 
 # Step 1: Normalize
 normalized = normalize_policy(policy_markdown)
@@ -73,19 +73,19 @@ workflow = parse_policy_two_step(
 
 | File | Purpose |
 |------|---------|
-| `src/policy_evaluator/numbering.py` | Clause numbering utilities |
-| `src/policy_evaluator/clause_mapping.py` | Result traceability utilities |
-| `src/policy_evaluator/templates/policy_normalizer.j2` | Step 1 LLM prompt |
-| `src/policy_evaluator/templates/workflow_from_normalized.j2` | Step 2 LLM prompt |
+| `src/policyflow/numbering.py` | Clause numbering utilities |
+| `src/policyflow/clause_mapping.py` | Result traceability utilities |
+| `src/policyflow/templates/policy_normalizer.j2` | Step 1 LLM prompt |
+| `src/policyflow/templates/workflow_from_normalized.j2` | Step 2 LLM prompt |
 
 ### Files Modified
 
 | File | Changes |
 |------|---------|
-| `src/policy_evaluator/models.py` | Added `ClauseType`, `Clause`, `Section`, `NormalizedPolicy`, `NodeGroup`, `HierarchicalWorkflowDefinition`, `ParsedWorkflowPolicyV2` |
-| `src/policy_evaluator/parser.py` | Added `normalize_policy()`, `generate_workflow_from_normalized()`, `parse_policy_two_step()` |
-| `src/policy_evaluator/prompts/__init__.py` | Added `get_normalize_policy_prompt()`, `get_workflow_from_normalized_prompt()` |
-| `src/policy_evaluator/cli.py` | Added `normalize`, `generate-workflow`, `parse-two-step` commands |
+| `src/policyflow/models.py` | Added `ClauseType`, `Clause`, `Section`, `NormalizedPolicy`, `NodeGroup`, `HierarchicalWorkflowDefinition`, `ParsedWorkflowPolicyV2` |
+| `src/policyflow/parser.py` | Added `normalize_policy()`, `generate_workflow_from_normalized()`, `parse_policy_two_step()` |
+| `src/policyflow/prompts/__init__.py` | Added `get_normalize_policy_prompt()`, `get_workflow_from_normalized_prompt()` |
+| `src/policyflow/cli.py` | Added `normalize`, `generate-workflow`, `parse-two-step` commands |
 
 ---
 
@@ -147,7 +147,7 @@ class ParsedWorkflowPolicyV2(BaseModel):
 ## Numbering Utilities
 
 ```python
-from policy_evaluator.numbering import (
+from policyflow.numbering import (
     generate_clause_number,      # Generate next clause number
     clause_number_to_node_id,    # "1.1.a" -> "clause_1_1_a"
     node_id_to_clause_number,    # "clause_1_1_a" -> "1.1.a"
@@ -163,7 +163,7 @@ from policy_evaluator.numbering import (
 ## Clause Mapping (Result Traceability)
 
 ```python
-from policy_evaluator.clause_mapping import (
+from policyflow.clause_mapping import (
     ClauseResult,
     extract_clause_results,      # Extract results from workflow shared store
     build_hierarchical_results,  # Nest results by clause hierarchy

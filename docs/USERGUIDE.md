@@ -356,12 +356,12 @@ workflow:
 ### Python API for Two-Step Parsing
 
 ```python
-from policy_evaluator.parser import (
+from policyflow.parser import (
     normalize_policy,
     generate_workflow_from_normalized,
     parse_policy_two_step,
 )
-from policy_evaluator.models import NormalizedPolicy
+from policyflow.models import NormalizedPolicy
 
 # Step 1: Normalize
 with open("policy.md") as f:
@@ -387,7 +387,7 @@ workflow = parse_policy_two_step(
 Map evaluation results back to clause numbers:
 
 ```python
-from policy_evaluator.clause_mapping import (
+from policyflow.clause_mapping import (
     extract_clause_results,
     format_clause_results_report,
     summarize_results,
@@ -412,7 +412,7 @@ print(f"Failed clauses: {summary['failed_clauses']}")
 ### Basic Usage
 
 ```python
-from policy_evaluator import evaluate
+from policyflow import evaluate
 
 result = evaluate(
     input_text="Your text to evaluate",
@@ -426,7 +426,7 @@ print(f"Confidence: {result.overall_confidence:.0%}")
 ### Advanced Usage
 
 ```python
-from policy_evaluator import (
+from policyflow import (
     parse_policy,
     PolicyEvaluationWorkflow,
     WorkflowConfig,
@@ -461,7 +461,7 @@ for criterion in result.criterion_results:
 ### Loading Cached Workflows
 
 ```python
-from policy_evaluator import PolicyEvaluationWorkflow, WorkflowConfig
+from policyflow import PolicyEvaluationWorkflow, WorkflowConfig
 
 config = WorkflowConfig()
 workflow = PolicyEvaluationWorkflow.load("workflow.yaml", config)
@@ -473,7 +473,7 @@ result = workflow.run("Text to evaluate")
 Workflows have built-in protection against infinite loops. By default, execution stops after 100 node iterations:
 
 ```python
-from policy_evaluator import DynamicWorkflowBuilder
+from policyflow import DynamicWorkflowBuilder
 
 builder = DynamicWorkflowBuilder(policy, config)
 
@@ -492,7 +492,7 @@ If the limit is exceeded, a `RuntimeError` is raised with a message indicating a
 ### YAML Serialization
 
 ```python
-from policy_evaluator import EvaluationResult, ParsedPolicy
+from policyflow import EvaluationResult, ParsedPolicy
 
 # Save result to YAML
 result.save_yaml("result.yaml")

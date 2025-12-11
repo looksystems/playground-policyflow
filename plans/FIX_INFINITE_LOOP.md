@@ -10,7 +10,7 @@ The LLM-generated workflow creates a cyclic graph with no terminal state. Pocket
 ## Implementation Steps
 
 ### Step 1: Update Template with Terminal Node Instructions
-**File**: `src/policy_evaluator/templates/policy_parser.j2`
+**File**: `src/policyflow/templates/policy_parser.j2`
 
 Add to the `## Instructions` section:
 ```
@@ -33,7 +33,7 @@ Update the output format example to show a terminal node:
 ```
 
 ### Step 2: Add Workflow Validation
-**File**: `src/policy_evaluator/workflow_builder.py`
+**File**: `src/policyflow/workflow_builder.py`
 
 Add a `_validate_workflow()` method called from `build()`:
 
@@ -84,7 +84,7 @@ def _validate_workflow(self, nodes: dict[str, Node]) -> None:
 Call `_validate_workflow(nodes)` in `build()` after Phase 2 (wiring routes).
 
 ### Step 3: Add Max Iterations Safety
-**File**: `src/policy_evaluator/workflow_builder.py`
+**File**: `src/policyflow/workflow_builder.py`
 
 Modify `run()` method to add iteration limiting:
 
@@ -126,8 +126,8 @@ def run(self, input_text: str, max_iterations: int = 100) -> dict:
 ```
 
 ## Files Modified
-1. `src/policy_evaluator/templates/policy_parser.j2` - Added terminal node documentation
-2. `src/policy_evaluator/workflow_builder.py` - Added validation and iteration limit
+1. `src/policyflow/templates/policy_parser.j2` - Added terminal node documentation
+2. `src/policyflow/workflow_builder.py` - Added validation and iteration limit
 3. `tests/test_workflow_builder.py` - Added tests for validation and iteration limiting
 
 ## Implementation Notes

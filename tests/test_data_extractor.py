@@ -4,8 +4,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from policy_evaluator.nodes.data_extractor import DataExtractorNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes.data_extractor import DataExtractorNode
+from policyflow.config import WorkflowConfig
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def create_mock_llm_response(content: str):
 class TestDataExtractorNodeEntities:
     """Tests for entity extraction."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_extract_entities(self, mock_completion, mock_config):
         """Entities should be extracted correctly."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -63,7 +63,7 @@ entities:
         assert "John Smith" in exec_res["entities"]["people"]
         assert "Acme Corp" in exec_res["entities"]["organizations"]
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_extract_entities_empty_list(self, mock_completion, mock_config):
         """Empty entity lists should be handled."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -94,7 +94,7 @@ entities:
 class TestDataExtractorNodeValues:
     """Tests for value extraction."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_extract_values(self, mock_completion, mock_config):
         """Values should be extracted correctly."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -121,7 +121,7 @@ values:
         assert exec_res["values"]["amount"] == "$1,500.00"
         assert exec_res["values"]["date"] == "December 15, 2024"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_extract_values_null(self, mock_completion, mock_config):
         """Missing values should return None."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -152,7 +152,7 @@ values:
 class TestDataExtractorNodeFacts:
     """Tests for fact extraction."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_extract_facts(self, mock_completion, mock_config):
         """Facts should be extracted correctly."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -180,7 +180,7 @@ facts:
 class TestDataExtractorNodeCombinedSchema:
     """Tests for combined extraction schema."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_combined_schema(self, mock_completion, mock_config):
         """All three types (entities, values, facts) should work together."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -226,7 +226,7 @@ facts:
 class TestDataExtractorNodeMissingFields:
     """Tests for handling missing fields in LLM response."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_entity_type(self, mock_completion, mock_config):
         """Missing entity type in response should return empty list."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -254,7 +254,7 @@ entities:
         assert "John Smith" in exec_res["entities"]["people"]
         assert exec_res["entities"]["organizations"] == []  # Default empty list
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_value_field(self, mock_completion, mock_config):
         """Missing value field in response should return None."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -281,7 +281,7 @@ values:
         assert exec_res["values"]["amount"] == "$100"
         assert exec_res["values"]["date"] is None  # Default None
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_fact(self, mock_completion, mock_config):
         """Missing fact in response should return None."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -309,7 +309,7 @@ facts:
 class TestDataExtractorNodeSharedStore:
     """Tests for shared store interactions."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_result_stored_in_shared(self, mock_completion, mock_config):
         """Extracted data should be stored in shared['extracted_data']."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -332,7 +332,7 @@ entities:
         assert "extracted_data" in shared
         assert "Test Person" in shared["extracted_data"]["entities"]["people"]
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_input_text(self, mock_completion, mock_config):
         """Missing input_text should default to empty string."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -355,7 +355,7 @@ entities:
 class TestDataExtractorNodeEdgeCases:
     """Edge case tests for DataExtractorNode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_returns_default_action(self, mock_completion, mock_config):
         """DataExtractorNode should always return 'default' action."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -376,7 +376,7 @@ entities:
 
         assert action == "default"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_empty_schema_sections(self, mock_completion, mock_config):
         """Only requested schema sections should appear in result."""
         mock_completion.return_value = create_mock_llm_response("""
@@ -399,7 +399,7 @@ facts:
         assert "entities" not in exec_res
         assert "values" not in exec_res
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_schema_passed_to_prep(self, mock_completion, mock_config):
         """Schema should be available in prep result."""
         mock_completion.return_value = create_mock_llm_response("entities: {}")

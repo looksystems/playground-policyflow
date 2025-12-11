@@ -58,8 +58,8 @@ Environment variables (set in `.env` or export):
 | File | Purpose |
 |------|---------|
 | `docker-compose.yml` | Phoenix container definition |
-| `src/policy_evaluator/config.py` | `PhoenixConfig` class |
-| `src/policy_evaluator/llm.py` | `_init_tracing()` function |
+| `src/policyflow/config.py` | `PhoenixConfig` class |
+| `src/policyflow/llm.py` | `_init_tracing()` function |
 | `pyproject.toml` | Optional `[tracing]` dependencies |
 
 ## Dependencies

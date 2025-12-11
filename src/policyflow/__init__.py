@@ -2,7 +2,7 @@
 Policy Evaluator - Generic policy evaluation using PocketFlow and LiteLLM.
 
 Usage:
-    from policy_evaluator import evaluate, parse_policy, PolicyEvaluationWorkflow
+    from policyflow import evaluate, parse_policy, PolicyEvaluationWorkflow
 
     # Quick evaluation
     result = evaluate(policy_path="policy.md", input_text="...")

@@ -4,8 +4,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from policy_evaluator.nodes.classifier import ClassifierNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes.classifier import ClassifierNode
+from policyflow.config import WorkflowConfig
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def create_mock_llm_response(content: str):
 class TestClassifierNodeBasic:
     """Tests for basic classification behavior."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_valid_classification(self, mock_completion, mock_config):
         """LLM returns valid category should work correctly."""
         mock_completion.return_value = create_mock_llm_response(
@@ -53,7 +53,7 @@ class TestClassifierNodeBasic:
         assert exec_res["confidence"] == 0.95
         assert "spam keywords" in exec_res["reasoning"]
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_invalid_category_fallback(self, mock_completion, mock_config):
         """LLM returns invalid category should fallback to first category."""
         mock_completion.return_value = create_mock_llm_response(
@@ -76,7 +76,7 @@ class TestClassifierNodeBasic:
         assert exec_res["confidence"] == 0.0  # Fallback has 0 confidence
         assert "invalid category" in exec_res["reasoning"].lower()
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_confidence_score(self, mock_completion, mock_config):
         """Confidence score should be captured correctly."""
         mock_completion.return_value = create_mock_llm_response(
@@ -107,7 +107,7 @@ class TestClassifierNodeBasic:
 class TestClassifierNodeDescriptions:
     """Tests for category descriptions feature."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_category_descriptions(self, mock_completion, mock_config):
         """Descriptions should be passed to prompt."""
         mock_completion.return_value = create_mock_llm_response(
@@ -134,7 +134,7 @@ class TestClassifierNodeDescriptions:
         # Verify descriptions are in prep_res
         assert prep_res["descriptions"]["complaint"] == "User is expressing dissatisfaction"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_partial_descriptions(self, mock_completion, mock_config):
         """Partial descriptions (not all categories) should work."""
         mock_completion.return_value = create_mock_llm_response(
@@ -159,7 +159,7 @@ class TestClassifierNodeDescriptions:
 class TestClassifierNodeSharedStore:
     """Tests for shared store interactions."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_result_stored_in_shared(self, mock_completion, mock_config):
         """Classification result should be stored in shared['classification']."""
         mock_completion.return_value = create_mock_llm_response(
@@ -182,7 +182,7 @@ class TestClassifierNodeSharedStore:
         assert shared["classification"]["confidence"] == 0.9
         assert shared["classification"]["reasoning"] == "Spam detected"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_input_text(self, mock_completion, mock_config):
         """Missing input_text should default to empty string."""
         mock_completion.return_value = create_mock_llm_response(
@@ -204,7 +204,7 @@ class TestClassifierNodeSharedStore:
 class TestClassifierNodeEdgeCases:
     """Edge case tests for ClassifierNode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_confidence_in_response(self, mock_completion, mock_config):
         """Missing confidence should default to 0.0."""
         mock_completion.return_value = create_mock_llm_response(
@@ -223,7 +223,7 @@ class TestClassifierNodeEdgeCases:
 
         assert exec_res["confidence"] == 0.0
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_reasoning_in_response(self, mock_completion, mock_config):
         """Missing reasoning should default to empty string."""
         mock_completion.return_value = create_mock_llm_response(
@@ -242,7 +242,7 @@ class TestClassifierNodeEdgeCases:
 
         assert exec_res["reasoning"] == ""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_single_category(self, mock_completion, mock_config):
         """Single category should work."""
         mock_completion.return_value = create_mock_llm_response(
@@ -262,7 +262,7 @@ class TestClassifierNodeEdgeCases:
 
         assert action == "only_option"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_action_is_category_name(self, mock_completion, mock_config):
         """Returned action should be the category name for routing."""
         mock_completion.return_value = create_mock_llm_response(

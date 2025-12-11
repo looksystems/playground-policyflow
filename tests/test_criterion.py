@@ -4,9 +4,9 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from policy_evaluator.nodes.criterion import CriterionEvaluationNode
-from policy_evaluator.models import Criterion, ParsedPolicy, LogicOperator
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes.criterion import CriterionEvaluationNode
+from policyflow.models import Criterion, ParsedPolicy, LogicOperator
+from policyflow.config import WorkflowConfig
 
 
 @pytest.fixture
@@ -53,7 +53,7 @@ def create_mock_llm_response(content: str):
 class TestCriterionEvaluationNodeBasic:
     """Tests for basic criterion evaluation."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_criterion_met(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -81,7 +81,7 @@ class TestCriterionEvaluationNodeBasic:
         assert result.reasoning == "The content is appropriate"
         assert result.confidence == 0.95
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_criterion_not_met(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -111,7 +111,7 @@ class TestCriterionEvaluationNodeBasic:
 class TestCriterionEvaluationNodeConfidence:
     """Tests for confidence score handling."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_confidence_stored(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -136,7 +136,7 @@ class TestCriterionEvaluationNodeConfidence:
         result = shared["criterion_results"]["criterion_1"]
         assert result.confidence == 0.73
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_confidence_defaults_to_zero(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -165,7 +165,7 @@ class TestCriterionEvaluationNodeConfidence:
 class TestCriterionEvaluationNodeSharedStore:
     """Tests for shared store interactions."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_result_stored_in_shared(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -193,7 +193,7 @@ class TestCriterionEvaluationNodeSharedStore:
         assert result.criterion_id == "criterion_1"
         assert result.criterion_name == "Test Criterion"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_multiple_criteria_results(
         self, mock_completion, mock_config, sample_parsed_policy
     ):
@@ -234,7 +234,7 @@ class TestCriterionEvaluationNodeSharedStore:
         assert "criterion_1" in shared["criterion_results"]
         assert "criterion_2" in shared["criterion_results"]
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_initializes_criterion_results_dict(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -263,7 +263,7 @@ class TestCriterionEvaluationNodeSharedStore:
 class TestCriterionEvaluationNodeEdgeCases:
     """Edge case tests for CriterionEvaluationNode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_met_defaults_to_false(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -288,7 +288,7 @@ class TestCriterionEvaluationNodeEdgeCases:
         result = shared["criterion_results"]["criterion_1"]
         assert result.met is False
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_reasoning_defaults_to_empty(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -313,7 +313,7 @@ class TestCriterionEvaluationNodeEdgeCases:
         result = shared["criterion_results"]["criterion_1"]
         assert result.reasoning == ""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_prep_extracts_policy_context(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):
@@ -338,7 +338,7 @@ class TestCriterionEvaluationNodeEdgeCases:
         node = CriterionEvaluationNode(criterion=sample_criterion)
         assert node.config is not None
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_returns_default_action(
         self, mock_completion, mock_config, sample_criterion, sample_parsed_policy
     ):

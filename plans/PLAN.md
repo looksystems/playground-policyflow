@@ -25,7 +25,7 @@ pocketflow/
 ├── README.md
 ├── PLAN.md
 ├── src/
-│   └── policy_evaluator/
+│   └── policyflow/
 │       ├── __init__.py              # Python API exports
 │       ├── cli.py                   # CLI (Typer)
 │       ├── config.py                # dotenv config + ConfidenceGateConfig
@@ -200,7 +200,7 @@ class EvaluationResult(BaseModel):
 ## Python API
 
 ```python
-from policy_evaluator import evaluate, parse_policy, ConfidenceLevel
+from policyflow import evaluate, parse_policy, ConfidenceLevel
 
 # Simple usage
 result = evaluate(
@@ -219,7 +219,7 @@ for cr in result.criterion_results:
         print(f"  - {sub.sub_criterion_name}: {'MET' if sub.met else 'NOT MET'}")
 
 # With custom config
-from policy_evaluator import WorkflowConfig, ConfidenceGateConfig
+from policyflow import WorkflowConfig, ConfidenceGateConfig
 
 config = WorkflowConfig(
     model="openai/gpt-4o",
@@ -231,7 +231,7 @@ config = WorkflowConfig(
 result = evaluate(input_text="...", policy_path="policy.md", config=config)
 
 # Workflow caching
-from policy_evaluator import PolicyEvaluationWorkflow
+from policyflow import PolicyEvaluationWorkflow
 
 # Save workflow for later use
 policy = parse_policy(open("policy.md").read(), config)

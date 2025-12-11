@@ -2,10 +2,10 @@
 
 import pytest
 
-from policy_evaluator.nodes.confidence_gate import ConfidenceGateNode
-from policy_evaluator.models import ConfidenceLevel
-from policy_evaluator.nodes.criterion import CriterionResult
-from policy_evaluator.config import WorkflowConfig, ConfidenceGateConfig
+from policyflow.nodes.confidence_gate import ConfidenceGateNode
+from policyflow.models import ConfidenceLevel
+from policyflow.nodes.criterion import CriterionResult
+from policyflow.config import WorkflowConfig, ConfidenceGateConfig
 
 
 @pytest.fixture

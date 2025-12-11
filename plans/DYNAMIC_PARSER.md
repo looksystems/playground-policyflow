@@ -17,7 +17,7 @@ Adapt the policy parser to dynamically discover and document available nodes. Ea
 
 ### Phase 1: Schema Infrastructure (2 new files)
 
-**1. Create `src/policy_evaluator/nodes/schema.py`**
+**1. Create `src/policyflow/nodes/schema.py`**
 ```python
 @dataclass
 class NodeParameter:
@@ -38,7 +38,7 @@ class NodeSchema:
     parser_exposed: bool = True
 ```
 
-**2. Create `src/policy_evaluator/nodes/registry.py`**
+**2. Create `src/policyflow/nodes/registry.py`**
 - `_node_registry: dict[str, Type[Node]]` - global registry
 - `register_node(cls)` - decorator/function to register
 - `get_node_class(name)` - lookup by name
@@ -51,26 +51,26 @@ class NodeSchema:
 Add `parser_schema` class attribute to each node:
 
 **Parser-exposed nodes (`parser_exposed=True`):**
-- `src/policy_evaluator/nodes/pattern_match.py`
-- `src/policy_evaluator/nodes/length_gate.py`
-- `src/policy_evaluator/nodes/keyword_scorer.py`
-- `src/policy_evaluator/nodes/transform.py`
-- `src/policy_evaluator/nodes/classifier.py`
-- `src/policy_evaluator/nodes/data_extractor.py`
-- `src/policy_evaluator/nodes/sentiment.py`
-- `src/policy_evaluator/nodes/sampler.py`
+- `src/policyflow/nodes/pattern_match.py`
+- `src/policyflow/nodes/length_gate.py`
+- `src/policyflow/nodes/keyword_scorer.py`
+- `src/policyflow/nodes/transform.py`
+- `src/policyflow/nodes/classifier.py`
+- `src/policyflow/nodes/data_extractor.py`
+- `src/policyflow/nodes/sentiment.py`
+- `src/policyflow/nodes/sampler.py`
 
 **Internal nodes (`parser_exposed=False`):**
-- `src/policy_evaluator/nodes/criterion.py`
-- `src/policy_evaluator/nodes/subcriterion.py`
-- `src/policy_evaluator/nodes/aggregate.py`
-- `src/policy_evaluator/nodes/confidence_gate.py`
+- `src/policyflow/nodes/criterion.py`
+- `src/policyflow/nodes/subcriterion.py`
+- `src/policyflow/nodes/aggregate.py`
+- `src/policyflow/nodes/confidence_gate.py`
 
 ---
 
 ### Phase 3: Node Registration
 
-**Modify `src/policy_evaluator/nodes/__init__.py`**
+**Modify `src/policyflow/nodes/__init__.py`**
 - Import registry functions
 - Register all node classes after import
 - Export `get_node_class`, `get_parser_schemas`
@@ -79,7 +79,7 @@ Add `parser_schema` class attribute to each node:
 
 ### Phase 4: Update Models
 
-**Modify `src/policy_evaluator/models.py`** - add:
+**Modify `src/policyflow/models.py`** - add:
 ```python
 class NodeConfig(BaseModel):
     id: str
@@ -102,18 +102,18 @@ class ParsedWorkflowPolicy(BaseModel):
 
 ### Phase 5: Dynamic Prompt Generation
 
-**Modify `src/policy_evaluator/templates/policy_parser.j2`**
+**Modify `src/policyflow/templates/policy_parser.j2`**
 - Add section listing available nodes from `available_nodes` variable
 - For each node: name, description, parameters, actions, YAML example
 
-**Modify `src/policy_evaluator/prompts/__init__.py`**
+**Modify `src/policyflow/prompts/__init__.py`**
 - `get_policy_parser_prompt()` calls `get_parser_schemas()` and passes to template
 
 ---
 
 ### Phase 6: Workflow Builder (1 new file)
 
-**Create `src/policy_evaluator/workflow_builder.py`**
+**Create `src/policyflow/workflow_builder.py`**
 ```python
 class DynamicWorkflowBuilder:
     def __init__(self, policy: ParsedWorkflowPolicy, config: WorkflowConfig)
@@ -127,7 +127,7 @@ class DynamicWorkflowBuilder:
 
 ### Phase 7: Update Parser
 
-**Modify `src/policy_evaluator/parser.py`**
+**Modify `src/policyflow/parser.py`**
 - Add `parse_policy_to_workflow()` function returning `ParsedWorkflowPolicy`
 - Keep existing `parse_policy()` for backward compatibility
 
@@ -137,23 +137,23 @@ class DynamicWorkflowBuilder:
 
 | File | Action |
 |------|--------|
-| `src/policy_evaluator/nodes/schema.py` | Create |
-| `src/policy_evaluator/nodes/registry.py` | Create |
-| `src/policy_evaluator/workflow_builder.py` | Create |
-| `src/policy_evaluator/nodes/__init__.py` | Modify |
-| `src/policy_evaluator/nodes/pattern_match.py` | Add schema |
-| `src/policy_evaluator/nodes/length_gate.py` | Add schema |
-| `src/policy_evaluator/nodes/keyword_scorer.py` | Add schema |
-| `src/policy_evaluator/nodes/transform.py` | Add schema |
-| `src/policy_evaluator/nodes/classifier.py` | Add schema |
-| `src/policy_evaluator/nodes/data_extractor.py` | Add schema |
-| `src/policy_evaluator/nodes/sentiment.py` | Add schema |
-| `src/policy_evaluator/nodes/sampler.py` | Add schema |
-| `src/policy_evaluator/nodes/criterion.py` | Add schema (exposed=False) |
-| `src/policy_evaluator/nodes/subcriterion.py` | Add schema (exposed=False) |
-| `src/policy_evaluator/nodes/aggregate.py` | Add schema (exposed=False) |
-| `src/policy_evaluator/nodes/confidence_gate.py` | Add schema (exposed=False) |
-| `src/policy_evaluator/models.py` | Add new models |
-| `src/policy_evaluator/templates/policy_parser.j2` | Add node docs |
-| `src/policy_evaluator/prompts/__init__.py` | Pass schemas to template |
-| `src/policy_evaluator/parser.py` | Add new parser function |
+| `src/policyflow/nodes/schema.py` | Create |
+| `src/policyflow/nodes/registry.py` | Create |
+| `src/policyflow/workflow_builder.py` | Create |
+| `src/policyflow/nodes/__init__.py` | Modify |
+| `src/policyflow/nodes/pattern_match.py` | Add schema |
+| `src/policyflow/nodes/length_gate.py` | Add schema |
+| `src/policyflow/nodes/keyword_scorer.py` | Add schema |
+| `src/policyflow/nodes/transform.py` | Add schema |
+| `src/policyflow/nodes/classifier.py` | Add schema |
+| `src/policyflow/nodes/data_extractor.py` | Add schema |
+| `src/policyflow/nodes/sentiment.py` | Add schema |
+| `src/policyflow/nodes/sampler.py` | Add schema |
+| `src/policyflow/nodes/criterion.py` | Add schema (exposed=False) |
+| `src/policyflow/nodes/subcriterion.py` | Add schema (exposed=False) |
+| `src/policyflow/nodes/aggregate.py` | Add schema (exposed=False) |
+| `src/policyflow/nodes/confidence_gate.py` | Add schema (exposed=False) |
+| `src/policyflow/models.py` | Add new models |
+| `src/policyflow/templates/policy_parser.j2` | Add node docs |
+| `src/policyflow/prompts/__init__.py` | Pass schemas to template |
+| `src/policyflow/parser.py` | Add new parser function |

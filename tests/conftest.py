@@ -4,13 +4,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from policy_evaluator.config import WorkflowConfig, ConfidenceGateConfig
-from policy_evaluator.models import (
+from policyflow.config import WorkflowConfig, ConfidenceGateConfig
+from policyflow.models import (
     Criterion,
     ParsedPolicy,
     LogicOperator,
 )
-from policy_evaluator.nodes.criterion import CriterionResult
+from policyflow.nodes.criterion import CriterionResult
 
 
 @pytest.fixture

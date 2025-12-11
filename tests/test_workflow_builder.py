@@ -5,9 +5,9 @@ import warnings
 import pytest
 from pocketflow import Node
 
-from policy_evaluator.workflow_builder import DynamicWorkflowBuilder
-from policy_evaluator.models import ParsedWorkflowPolicy, WorkflowDefinition, NodeConfig
-from policy_evaluator.nodes.registry import register_node
+from policyflow.workflow_builder import DynamicWorkflowBuilder
+from policyflow.models import ParsedWorkflowPolicy, WorkflowDefinition, NodeConfig
+from policyflow.nodes.registry import register_node
 
 
 @register_node

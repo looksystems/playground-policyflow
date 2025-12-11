@@ -1,4 +1,4 @@
-# Agentflow
+# Policyflow
 
 > **NOTE**: This is an experimental/learning project only and is under active development.
 
@@ -63,7 +63,7 @@ uv run policy-eval eval --policy policy.md --input "..." --model openai/gpt-4o
 Run with `uv run python your_script.py` or in a `uv run python` REPL:
 
 ```python
-from policy_evaluator import evaluate
+from policyflow import evaluate
 
 result = evaluate(
     input_text="Based on your risk profile, I recommend buying XYZ",
@@ -89,7 +89,7 @@ for cr in result.criterion_results:
 ### Custom Configuration
 
 ```python
-from policy_evaluator import evaluate, WorkflowConfig, ConfidenceGateConfig
+from policyflow import evaluate, WorkflowConfig, ConfidenceGateConfig
 
 config = WorkflowConfig(
     model="openai/gpt-4o",

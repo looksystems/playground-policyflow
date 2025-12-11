@@ -1,4 +1,4 @@
-# Additional Node Types for AgentFlow
+# Additional Node Types for PolicyFlow
 
 ## Status: COMPLETE
 
@@ -36,12 +36,12 @@ All 8 new node types have been implemented with self-documenting schemas for the
 
 ## Part 1: LLMNode Base Class
 
-**File**: `src/policy_evaluator/nodes/llm_node.py`
+**File**: `src/policyflow/nodes/llm_node.py`
 
 Base class for all LLM-based nodes with built-in caching and rate limiting.
 
 ```python
-from policy_evaluator.nodes import LLMNode
+from policyflow.nodes import LLMNode
 
 class MyCustomNode(LLMNode):
     def __init__(self, config: WorkflowConfig):
@@ -63,12 +63,12 @@ class MyCustomNode(LLMNode):
 
 ### PatternMatchNode
 
-**File**: `src/policy_evaluator/nodes/pattern_match.py`
+**File**: `src/policyflow/nodes/pattern_match.py`
 
 Check input against regex/keyword patterns.
 
 ```python
-from policy_evaluator.nodes import PatternMatchNode
+from policyflow.nodes import PatternMatchNode
 
 node = PatternMatchNode(
     patterns=[r"\b(password|secret)\b", r"\d{3}-\d{2}-\d{4}"],
@@ -83,12 +83,12 @@ node = PatternMatchNode(
 
 ### KeywordScorerNode
 
-**File**: `src/policy_evaluator/nodes/keyword_scorer.py`
+**File**: `src/policyflow/nodes/keyword_scorer.py`
 
 Score input based on weighted keyword presence.
 
 ```python
-from policy_evaluator.nodes import KeywordScorerNode
+from policyflow.nodes import KeywordScorerNode
 
 node = KeywordScorerNode(
     keywords={"urgent": 0.5, "critical": 0.8, "spam": -1.0},
@@ -103,12 +103,12 @@ node = KeywordScorerNode(
 
 ### LengthGateNode
 
-**File**: `src/policy_evaluator/nodes/length_gate.py`
+**File**: `src/policyflow/nodes/length_gate.py`
 
 Route based on input length.
 
 ```python
-from policy_evaluator.nodes import LengthGateNode
+from policyflow.nodes import LengthGateNode
 
 node = LengthGateNode(
     thresholds={"short": 100, "medium": 1000, "long": 5000}
@@ -122,12 +122,12 @@ node = LengthGateNode(
 
 ### TransformNode
 
-**File**: `src/policy_evaluator/nodes/transform.py`
+**File**: `src/policyflow/nodes/transform.py`
 
 Transform/preprocess input text.
 
 ```python
-from policy_evaluator.nodes import TransformNode
+from policyflow.nodes import TransformNode
 
 node = TransformNode(
     transforms=["lowercase", "strip_html", "normalize_whitespace", "truncate:1000"],
@@ -154,14 +154,14 @@ node = TransformNode(
 
 ### ClassifierNode
 
-**File**: `src/policy_evaluator/nodes/classifier.py`
-**Template**: `src/policy_evaluator/templates/classifier.j2`
+**File**: `src/policyflow/nodes/classifier.py`
+**Template**: `src/policyflow/templates/classifier.j2`
 
 Classify input into predefined categories.
 
 ```python
-from policy_evaluator.nodes import ClassifierNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes import ClassifierNode
+from policyflow.config import WorkflowConfig
 
 node = ClassifierNode(
     categories=["spam", "legitimate", "unclear"],
@@ -181,14 +181,14 @@ node = ClassifierNode(
 
 ### DataExtractorNode
 
-**File**: `src/policy_evaluator/nodes/data_extractor.py`
-**Template**: `src/policy_evaluator/templates/extractor.j2`
+**File**: `src/policyflow/nodes/data_extractor.py`
+**Template**: `src/policyflow/templates/extractor.j2`
 
 Extract structured data from input.
 
 ```python
-from policy_evaluator.nodes import DataExtractorNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes import DataExtractorNode
+from policyflow.config import WorkflowConfig
 
 node = DataExtractorNode(
     schema={
@@ -207,14 +207,14 @@ node = DataExtractorNode(
 
 ### SentimentNode
 
-**File**: `src/policy_evaluator/nodes/sentiment.py`
-**Template**: `src/policy_evaluator/templates/sentiment.j2`
+**File**: `src/policyflow/nodes/sentiment.py`
+**Template**: `src/policyflow/templates/sentiment.j2`
 
 Classify sentiment/emotional tone.
 
 ```python
-from policy_evaluator.nodes import SentimentNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes import SentimentNode
+from policyflow.config import WorkflowConfig
 
 node = SentimentNode(
     config=WorkflowConfig(),
@@ -229,13 +229,13 @@ node = SentimentNode(
 
 ### SamplerNode
 
-**File**: `src/policy_evaluator/nodes/sampler.py`
+**File**: `src/policyflow/nodes/sampler.py`
 
 Run evaluation N times and aggregate for consensus.
 
 ```python
-from policy_evaluator.nodes import SamplerNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes import SamplerNode
+from policyflow.config import WorkflowConfig
 
 node = SamplerNode(
     n_samples=5,
@@ -255,7 +255,7 @@ node = SamplerNode(
 Cache and throttle settings are configured in `WorkflowConfig`:
 
 ```python
-from policy_evaluator.config import WorkflowConfig
+from policyflow.config import WorkflowConfig
 
 config = WorkflowConfig()
 # config.cache.enabled = True
@@ -276,7 +276,7 @@ Environment variables:
 
 ## Result Types
 
-All result types are defined in `src/policy_evaluator/models.py`:
+All result types are defined in `src/policyflow/models.py`:
 
 - `PatternMatchResult` - For PatternMatchNode
 - `KeywordScoreResult` - For KeywordScorerNode
@@ -291,26 +291,26 @@ All result types are defined in `src/policy_evaluator/models.py`:
 
 | File | Description |
 |------|-------------|
-| `src/policy_evaluator/nodes/llm_node.py` | Base class with caching + throttling |
-| `src/policy_evaluator/nodes/pattern_match.py` | Regex/keyword matching |
-| `src/policy_evaluator/nodes/length_gate.py` | Length-based routing |
-| `src/policy_evaluator/nodes/keyword_scorer.py` | Weighted keyword scoring |
-| `src/policy_evaluator/nodes/transform.py` | Text preprocessing |
-| `src/policy_evaluator/nodes/classifier.py` | LLM classification |
-| `src/policy_evaluator/nodes/data_extractor.py` | LLM data extraction |
-| `src/policy_evaluator/nodes/sentiment.py` | LLM sentiment analysis |
-| `src/policy_evaluator/nodes/sampler.py` | Multi-sample consensus |
-| `src/policy_evaluator/templates/classifier.j2` | Classifier prompt template |
-| `src/policy_evaluator/templates/extractor.j2` | Extractor prompt template |
-| `src/policy_evaluator/templates/sentiment.j2` | Sentiment prompt template |
+| `src/policyflow/nodes/llm_node.py` | Base class with caching + throttling |
+| `src/policyflow/nodes/pattern_match.py` | Regex/keyword matching |
+| `src/policyflow/nodes/length_gate.py` | Length-based routing |
+| `src/policyflow/nodes/keyword_scorer.py` | Weighted keyword scoring |
+| `src/policyflow/nodes/transform.py` | Text preprocessing |
+| `src/policyflow/nodes/classifier.py` | LLM classification |
+| `src/policyflow/nodes/data_extractor.py` | LLM data extraction |
+| `src/policyflow/nodes/sentiment.py` | LLM sentiment analysis |
+| `src/policyflow/nodes/sampler.py` | Multi-sample consensus |
+| `src/policyflow/templates/classifier.j2` | Classifier prompt template |
+| `src/policyflow/templates/extractor.j2` | Extractor prompt template |
+| `src/policyflow/templates/sentiment.j2` | Sentiment prompt template |
 
 ## Files Modified
 
 | File | Changes |
 |------|---------|
-| `src/policy_evaluator/nodes/__init__.py` | Export all new nodes, registry integration |
-| `src/policy_evaluator/models.py` | Add result types, workflow models |
-| `src/policy_evaluator/config.py` | Add CacheConfig, ThrottleConfig |
+| `src/policyflow/nodes/__init__.py` | Export all new nodes, registry integration |
+| `src/policyflow/models.py` | Add result types, workflow models |
+| `src/policyflow/config.py` | Add CacheConfig, ThrottleConfig |
 
 ---
 
@@ -322,16 +322,16 @@ All nodes are now self-documenting through the `parser_schema` class attribute. 
 
 | File | Description |
 |------|-------------|
-| `src/policy_evaluator/nodes/schema.py` | `NodeSchema` and `NodeParameter` dataclasses |
-| `src/policy_evaluator/nodes/registry.py` | Node registration and discovery |
-| `src/policy_evaluator/workflow_builder.py` | Build workflows from parsed configs |
+| `src/policyflow/nodes/schema.py` | `NodeSchema` and `NodeParameter` dataclasses |
+| `src/policyflow/nodes/registry.py` | Node registration and discovery |
+| `src/policyflow/workflow_builder.py` | Build workflows from parsed configs |
 
 ### Node Schema Structure
 
 Each node declares a `parser_schema` class attribute:
 
 ```python
-from policy_evaluator.nodes import NodeSchema, NodeParameter
+from policyflow.nodes import NodeSchema, NodeParameter
 
 class MyNode(Node):
     parser_schema = NodeSchema(
@@ -351,7 +351,7 @@ class MyNode(Node):
 ### Registry Functions
 
 ```python
-from policy_evaluator.nodes import (
+from policyflow.nodes import (
     get_parser_schemas,  # Get schemas for parser-exposed nodes
     get_node_class,      # Lookup node class by name
     get_all_nodes,       # Get all registered nodes
@@ -365,8 +365,8 @@ schemas = get_parser_schemas()  # Returns list of NodeSchema
 ### Using the Dynamic Parser
 
 ```python
-from policy_evaluator.parser import parse_policy_to_workflow
-from policy_evaluator.workflow_builder import DynamicWorkflowBuilder
+from policyflow.parser import parse_policy_to_workflow
+from policyflow.workflow_builder import DynamicWorkflowBuilder
 
 # Parse policy into workflow definition
 policy = """
@@ -423,7 +423,7 @@ workflow:
 
 ```python
 from pocketflow import Node
-from policy_evaluator.nodes import NodeSchema, NodeParameter, register_node
+from policyflow.nodes import NodeSchema, NodeParameter, register_node
 
 @register_node
 class MyCustomNode(Node):

@@ -2,13 +2,13 @@
 
 import pytest
 
-from policy_evaluator.nodes.aggregate import ResultAggregatorNode
-from policy_evaluator.models import (
+from policyflow.nodes.aggregate import ResultAggregatorNode
+from policyflow.models import (
     Criterion,
     ParsedPolicy,
     LogicOperator,
 )
-from policy_evaluator.nodes.criterion import CriterionResult
+from policyflow.nodes.criterion import CriterionResult
 
 
 @pytest.fixture

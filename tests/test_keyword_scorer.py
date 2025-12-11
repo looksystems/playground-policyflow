@@ -2,7 +2,7 @@
 
 import pytest
 
-from policy_evaluator.nodes.keyword_scorer import KeywordScorerNode
+from policyflow.nodes.keyword_scorer import KeywordScorerNode
 
 
 class TestKeywordScorerNodeThresholds:

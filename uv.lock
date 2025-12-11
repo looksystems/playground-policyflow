@@ -1132,7 +1132,7 @@ wheels = [
 ]
 
 [[package]]
-name = "policy-evaluator"
+name = "policyflow"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

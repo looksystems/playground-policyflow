@@ -4,8 +4,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from policy_evaluator.nodes.sampler import SamplerNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes.sampler import SamplerNode
+from policyflow.config import WorkflowConfig
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def create_mock_llm_response(content: str):
 class TestSamplerNodeMajorityAggregation:
     """Tests for majority aggregation mode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_majority_aggregation_true(self, mock_completion, mock_config):
         """>50% true results should aggregate to true."""
         # 3 out of 5 return true
@@ -59,7 +59,7 @@ class TestSamplerNodeMajorityAggregation:
         assert exec_res["true_count"] == 3
         assert exec_res["false_count"] == 2
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_majority_aggregation_false(self, mock_completion, mock_config):
         """<=50% true results should aggregate to false."""
         # 2 out of 5 return true
@@ -90,7 +90,7 @@ class TestSamplerNodeMajorityAggregation:
 class TestSamplerNodeUnanimousAggregation:
     """Tests for unanimous aggregation mode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_unanimous_aggregation_all_true(self, mock_completion, mock_config):
         """All samples true should aggregate to true."""
         responses = [
@@ -115,7 +115,7 @@ class TestSamplerNodeUnanimousAggregation:
         assert exec_res["aggregated_result"] is True
         assert exec_res["true_count"] == 3
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_unanimous_aggregation_not_all(self, mock_completion, mock_config):
         """Any false sample should aggregate to false in unanimous mode."""
         responses = [
@@ -143,7 +143,7 @@ class TestSamplerNodeUnanimousAggregation:
 class TestSamplerNodeAnyAggregation:
     """Tests for 'any' aggregation mode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_any_aggregation_one_true(self, mock_completion, mock_config):
         """At least one true should aggregate to true."""
         responses = [
@@ -167,7 +167,7 @@ class TestSamplerNodeAnyAggregation:
 
         assert exec_res["aggregated_result"] is True
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_any_aggregation_all_false(self, mock_completion, mock_config):
         """All false should aggregate to false."""
         responses = [
@@ -195,7 +195,7 @@ class TestSamplerNodeAnyAggregation:
 class TestSamplerNodeActions:
     """Tests for routing actions based on agreement."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_consensus_action(self, mock_completion, mock_config):
         """100% agreement should return 'consensus' action."""
         responses = [
@@ -221,7 +221,7 @@ class TestSamplerNodeActions:
         assert action == "consensus"
         assert exec_res["agreement_ratio"] == 1.0
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_majority_action(self, mock_completion, mock_config):
         """Clear majority (not unanimous) should return 'majority' action."""
         responses = [
@@ -247,7 +247,7 @@ class TestSamplerNodeActions:
         assert action == "majority"
         assert exec_res["agreement_ratio"] == 2 / 3
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_split_action(self, mock_completion, mock_config):
         """50/50 split should return 'split' action."""
         responses = [
@@ -276,7 +276,7 @@ class TestSamplerNodeActions:
 class TestSamplerNodeAgreementRatio:
     """Tests for agreement ratio calculation."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_agreement_ratio_calculated(self, mock_completion, mock_config):
         """Agreement ratio should be correctly calculated."""
         # 4 true, 1 false = 80% agreement
@@ -307,7 +307,7 @@ class TestSamplerNodeAgreementRatio:
 class TestSamplerNodeSharedStore:
     """Tests for shared store interactions."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_individual_results_stored(self, mock_completion, mock_config):
         """Individual sample results should be stored."""
         responses = [
@@ -335,7 +335,7 @@ class TestSamplerNodeSharedStore:
         assert shared["sample_results"]["individual_results"][1]["result"] is False
         assert shared["sample_results"]["individual_results"][0]["reasoning"] == "Reason 1"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_sample_results_structure(self, mock_completion, mock_config):
         """Sample results should have complete structure."""
         responses = [
@@ -370,7 +370,7 @@ class TestSamplerNodeSharedStore:
 class TestSamplerNodeEdgeCases:
     """Edge case tests for SamplerNode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_single_sample(self, mock_completion, mock_config):
         """Single sample should work correctly."""
         responses = [
@@ -394,7 +394,7 @@ class TestSamplerNodeEdgeCases:
         assert exec_res["aggregated_result"] is True
         assert action == "consensus"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_custom_input_key(self, mock_completion, mock_config):
         """Custom input_key should read from specified key."""
         responses = [
@@ -419,7 +419,7 @@ class TestSamplerNodeEdgeCases:
 
         assert prep_res["input_text"] == "Custom content"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_system_prompt_passed(self, mock_completion, mock_config):
         """System prompt should be stored for use."""
         responses = [
@@ -438,7 +438,7 @@ class TestSamplerNodeEdgeCases:
 
         assert node.system_prompt == "You are a helpful evaluator"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_result_defaults_false(self, mock_completion, mock_config):
         """Missing result field should default to false."""
         responses = [

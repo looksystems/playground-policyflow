@@ -2,7 +2,7 @@
 
 import pytest
 
-from policy_evaluator.nodes.pattern_match import PatternMatchNode
+from policyflow.nodes.pattern_match import PatternMatchNode
 
 
 class TestPatternMatchNodeAnyMode:

@@ -2,7 +2,7 @@
 
 import pytest
 
-from policy_evaluator.nodes.transform import TransformNode
+from policyflow.nodes.transform import TransformNode
 
 
 class TestTransformNodeBasicTransforms:

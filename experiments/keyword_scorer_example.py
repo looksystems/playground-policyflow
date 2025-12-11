@@ -30,7 +30,7 @@ example_thresholds = {
 }
 
 # Usage in a workflow:
-# from policy_evaluator.nodes import KeywordScorerNode
+# from policyflow.nodes import KeywordScorerNode
 #
 # scorer = KeywordScorerNode(
 #     keywords=example_keywords,

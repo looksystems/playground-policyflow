@@ -4,9 +4,9 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from policy_evaluator.nodes.subcriterion import SubCriterionNode
-from policy_evaluator.models import Criterion, LogicOperator
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes.subcriterion import SubCriterionNode
+from policyflow.models import Criterion, LogicOperator
+from policyflow.config import WorkflowConfig
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def create_mock_llm_response(content: str):
 class TestSubCriterionNodeAnyLogic:
     """Tests for ANY logic (OR) early termination."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_any_logic_satisfied_early_exit(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -79,7 +79,7 @@ class TestSubCriterionNodeAnyLogic:
         result = shared["sub_criterion_results"]["parent_1"]["sub_1"]
         assert result.met is True
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_any_logic_not_met_continues(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -109,7 +109,7 @@ class TestSubCriterionNodeAnyLogic:
 class TestSubCriterionNodeAllLogic:
     """Tests for ALL logic (AND) early termination."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_all_logic_failed_early_exit(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -135,7 +135,7 @@ class TestSubCriterionNodeAllLogic:
 
         assert action == "failed"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_all_logic_met_continues(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -165,7 +165,7 @@ class TestSubCriterionNodeAllLogic:
 class TestSubCriterionNodeNestedStorage:
     """Tests for nested result storage structure."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_nested_storage(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -198,7 +198,7 @@ class TestSubCriterionNodeNestedStorage:
         assert result.sub_criterion_id == "sub_1"
         assert result.sub_criterion_name == "Sub Criterion 1"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_multiple_sub_criteria_same_parent(
         self, mock_completion, mock_config, parent_criterion
     ):
@@ -242,7 +242,7 @@ class TestSubCriterionNodeNestedStorage:
         assert "sub_1" in shared["sub_criterion_results"]["parent_1"]
         assert "sub_2" in shared["sub_criterion_results"]["parent_1"]
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_initializes_nested_dicts(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -274,7 +274,7 @@ class TestSubCriterionNodeNestedStorage:
 class TestSubCriterionNodeEdgeCases:
     """Edge case tests for SubCriterionNode."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_met_defaults_to_false(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -301,7 +301,7 @@ class TestSubCriterionNodeEdgeCases:
         result = shared["sub_criterion_results"]["parent_1"]["sub_1"]
         assert result.met is False
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_confidence_defaults_to_zero(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -328,7 +328,7 @@ class TestSubCriterionNodeEdgeCases:
         result = shared["sub_criterion_results"]["parent_1"]["sub_1"]
         assert result.confidence == 0.0
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_reasoning_defaults_to_empty(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -355,7 +355,7 @@ class TestSubCriterionNodeEdgeCases:
         result = shared["sub_criterion_results"]["parent_1"]["sub_1"]
         assert result.reasoning == ""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_prep_extracts_policy_context(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):
@@ -378,7 +378,7 @@ class TestSubCriterionNodeEdgeCases:
         assert prep_res["sub_criterion"] == sub_criterion
         assert prep_res["policy_context"] == "Test policy context"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_policy_context(
         self, mock_completion, mock_config, parent_criterion, sub_criterion
     ):

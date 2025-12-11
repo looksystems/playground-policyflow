@@ -61,12 +61,12 @@ class SomeNode(Node):
 
 ## Files to Modify (in order)
 
-1. `src/policy_evaluator/config.py` - Add constant, remove field
-2. `src/policy_evaluator/llm.py` - Add `model` parameter
-3. `src/policy_evaluator/nodes/llm_node.py` - Add class attr + instance param
-4. `src/policy_evaluator/nodes/classifier.py`
-5. `src/policy_evaluator/nodes/sentiment.py`
-6. `src/policy_evaluator/nodes/data_extractor.py`
-7. `src/policy_evaluator/nodes/sampler.py`
-8. `src/policy_evaluator/nodes/criterion.py`
-9. `src/policy_evaluator/nodes/subcriterion.py`
+1. `src/policyflow/config.py` - Add constant, remove field
+2. `src/policyflow/llm.py` - Add `model` parameter
+3. `src/policyflow/nodes/llm_node.py` - Add class attr + instance param
+4. `src/policyflow/nodes/classifier.py`
+5. `src/policyflow/nodes/sentiment.py`
+6. `src/policyflow/nodes/data_extractor.py`
+7. `src/policyflow/nodes/sampler.py`
+8. `src/policyflow/nodes/criterion.py`
+9. `src/policyflow/nodes/subcriterion.py`

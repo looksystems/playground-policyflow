@@ -2,7 +2,7 @@
 
 import pytest
 
-from policy_evaluator.nodes.length_gate import LengthGateNode
+from policyflow.nodes.length_gate import LengthGateNode
 
 
 class TestLengthGateNodeBuckets:

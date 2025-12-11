@@ -4,8 +4,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from policy_evaluator.nodes.sentiment import SentimentNode
-from policy_evaluator.config import WorkflowConfig
+from policyflow.nodes.sentiment import SentimentNode
+from policyflow.config import WorkflowConfig
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def create_mock_llm_response(content: str):
 class TestSentimentNodeBasic:
     """Tests for basic sentiment analysis."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_positive_sentiment(self, mock_completion, mock_config):
         """Positive sentiment should return 'positive' action."""
         mock_completion.return_value = create_mock_llm_response(
@@ -48,7 +48,7 @@ class TestSentimentNodeBasic:
         assert shared["sentiment"]["label"] == "positive"
         assert shared["sentiment"]["confidence"] == 0.95
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_negative_sentiment(self, mock_completion, mock_config):
         """Negative sentiment should return 'negative' action."""
         mock_completion.return_value = create_mock_llm_response(
@@ -65,7 +65,7 @@ class TestSentimentNodeBasic:
         assert action == "negative"
         assert shared["sentiment"]["label"] == "negative"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_neutral_sentiment(self, mock_completion, mock_config):
         """Neutral sentiment should return 'neutral' action."""
         mock_completion.return_value = create_mock_llm_response(
@@ -82,7 +82,7 @@ class TestSentimentNodeBasic:
         assert action == "neutral"
         assert shared["sentiment"]["label"] == "neutral"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_mixed_sentiment(self, mock_completion, mock_config):
         """Mixed sentiment should return 'mixed' action."""
         mock_completion.return_value = create_mock_llm_response(
@@ -103,7 +103,7 @@ class TestSentimentNodeBasic:
 class TestSentimentNodeValidation:
     """Tests for sentiment validation and edge cases."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_invalid_sentiment_defaults_neutral(self, mock_completion, mock_config):
         """Invalid sentiment label should default to neutral."""
         mock_completion.return_value = create_mock_llm_response(
@@ -120,7 +120,7 @@ class TestSentimentNodeValidation:
         assert action == "neutral"
         assert shared["sentiment"]["label"] == "neutral"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_case_insensitive_sentiment(self, mock_completion, mock_config):
         """Sentiment label should be case-insensitive."""
         mock_completion.return_value = create_mock_llm_response(
@@ -140,7 +140,7 @@ class TestSentimentNodeValidation:
 class TestSentimentNodeGranularity:
     """Tests for granularity levels."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_basic_granularity(self, mock_completion, mock_config):
         """Basic mode should return only label and confidence."""
         mock_completion.return_value = create_mock_llm_response(
@@ -159,7 +159,7 @@ class TestSentimentNodeGranularity:
         assert "intensity" not in shared["sentiment"]
         assert "emotions" not in shared["sentiment"]
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_detailed_granularity(self, mock_completion, mock_config):
         """Detailed mode should include intensity and emotions."""
         mock_completion.return_value = create_mock_llm_response(
@@ -178,7 +178,7 @@ class TestSentimentNodeGranularity:
         assert "joy" in shared["sentiment"]["emotions"]
         assert "excitement" in shared["sentiment"]["emotions"]
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_detailed_granularity_missing_fields(self, mock_completion, mock_config):
         """Missing detailed fields should have defaults."""
         mock_completion.return_value = create_mock_llm_response(
@@ -199,7 +199,7 @@ class TestSentimentNodeGranularity:
 class TestSentimentNodeCustomInputKey:
     """Tests for custom input key configuration."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_custom_input_key(self, mock_completion, mock_config):
         """Custom input_key should read from specified key."""
         mock_completion.return_value = create_mock_llm_response(
@@ -220,7 +220,7 @@ class TestSentimentNodeCustomInputKey:
 
         assert prep_res["input_text"] == "I love it!"
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_input_key(self, mock_completion, mock_config):
         """Missing input_key should default to empty string."""
         mock_completion.return_value = create_mock_llm_response(
@@ -238,7 +238,7 @@ class TestSentimentNodeCustomInputKey:
 class TestSentimentNodeSharedStore:
     """Tests for shared store interactions."""
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_result_stored_in_shared(self, mock_completion, mock_config):
         """Sentiment result should be stored in shared['sentiment']."""
         mock_completion.return_value = create_mock_llm_response(
@@ -256,7 +256,7 @@ class TestSentimentNodeSharedStore:
         assert shared["sentiment"]["label"] == "positive"
         assert shared["sentiment"]["confidence"] == 0.85
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_missing_confidence_defaults_to_zero(self, mock_completion, mock_config):
         """Missing confidence should default to 0.0."""
         mock_completion.return_value = create_mock_llm_response(
@@ -285,7 +285,7 @@ class TestSentimentNodeValidSentiments:
             "mixed",
         }
 
-    @patch("policy_evaluator.llm.completion")
+    @patch("policyflow.llm.completion")
     def test_all_valid_sentiments_work(self, mock_completion, mock_config):
         """All valid sentiment labels should be accepted."""
         for sentiment in ["positive", "negative", "neutral", "mixed"]:

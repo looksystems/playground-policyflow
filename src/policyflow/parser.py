@@ -87,7 +87,7 @@ def parse_policy_to_workflow(
         ... 3. Negative sentiment that may require human review
         ... '''
         >>> parsed = parse_policy_to_workflow(policy)
-        >>> from policy_evaluator.workflow_builder import DynamicWorkflowBuilder
+        >>> from policyflow.workflow_builder import DynamicWorkflowBuilder
         >>> builder = DynamicWorkflowBuilder(parsed)
         >>> result = builder.run("Check this user message")
     """

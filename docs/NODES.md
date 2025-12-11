@@ -60,7 +60,7 @@ All LLM nodes accept a `model` parameter to specify which LLM to use. Each node 
 
 ```python
 from pocketflow import Node
-from policy_evaluator.nodes import NodeSchema, NodeParameter, register_node
+from policyflow.nodes import NodeSchema, NodeParameter, register_node
 
 class MyNode(Node):
     parser_schema = NodeSchema(
@@ -101,7 +101,7 @@ Each node defines its own `default_model` and result model directly in its file:
 
 ```python
 from pydantic import BaseModel, Field
-from policy_evaluator.nodes import LLMNode, NodeSchema, NodeParameter
+from policyflow.nodes import LLMNode, NodeSchema, NodeParameter
 
 # Define the result model in the same file as the node
 class MyAnalysisResult(BaseModel):
@@ -161,7 +161,7 @@ length_gate - "too_long" >> truncate_node
 ## Registry Functions
 
 ```python
-from policy_evaluator.nodes import (
+from policyflow.nodes import (
     register_node,
     get_node_class,
     get_all_nodes,
@@ -196,7 +196,7 @@ When using the two-step parser, node IDs follow clause numbering:
 ### Numbering Utilities
 
 ```python
-from policy_evaluator.numbering import (
+from policyflow.numbering import (
     clause_number_to_node_id,    # "1.1.a" -> "clause_1_1_a"
     node_id_to_clause_number,    # "clause_1_1_a" -> "1.1.a"
     generate_clause_number,      # Generate next in sequence
@@ -231,7 +231,7 @@ workflow:
 ### Result Traceability
 
 ```python
-from policy_evaluator.clause_mapping import (
+from policyflow.clause_mapping import (
     ClauseResult,
     extract_clause_results,
     format_clause_results_report,
