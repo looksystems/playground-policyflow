@@ -1,0 +1,247 @@
+You are a workflow architect. Generate an executable workflow from a normalized policy document.
+
+## CRITICAL: Node ID Naming Convention
+Node IDs MUST match clause numbers using this exact format:
+- Clause 1.1 -> node id: `clause_1_1`
+- Clause 1.1.a -> node id: `clause_1_1_a`
+- Clause 2.1.1.b -> node id: `clause_2_1_1_b`
+
+Replace dots with underscores and prefix with `clause_`. This mapping is MANDATORY for explainability and audit trails.
+
+## Output Format
+Return a YAML object with this schema:
+
+```yaml
+title: Workflow title
+description: What this workflow evaluates
+workflow:
+  nodes:
+    - id: clause_1_1          # MUST match clause number!
+      type: NodeTypeName
+      params:
+        param1: value1
+      routes:
+        action1: clause_1_2   # Route to next clause node
+        action2: aggregate_1
+    - id: aggregate_1         # Aggregator for section 1
+      type: DataExtractorNode
+      params:
+        schema:
+          facts:
+            - result: section 1 evaluation complete
+      routes: {}              # Terminal node
+  start_node: preprocess
+  hierarchy:
+    - clause_number: "1.1"
+      clause_text: Original clause text
+      nodes: ["clause_1_1"]   # Node(s) implementing this clause
+      logic: any
+      sub_groups:
+        - clause_number: "1.1.a"
+          clause_text: Sub-clause text
+          nodes: ["clause_1_1_a"]
+          logic: null
+          sub_groups: []
+```
+
+## Available Node Types
+{% if available_nodes %}
+{% for node in available_nodes %}
+### {{ node.name }}
+{{ node.description }}
+
+{% if node.parameters %}
+**Parameters:**
+{% for param in node.parameters %}
+- `{{ param.name }}` ({{ param.type }}{% if not param.required %}, optional{% if param.default is not none %}, default: {{ param.default }}{% endif %}{% endif %}): {{ param.description }}
+{% endfor %}
+{% endif %}
+
+**Actions:** {{ node.actions | join(", ") }}
+
+**Example:**
+```yaml
+{{ node.yaml_example }}
+```
+
+{% endfor %}
+{% else %}
+No custom nodes available. Use standard workflow patterns.
+{% endif %}
+
+## Workflow Design Guidelines
+
+### 1. Node ID Convention (MANDATORY)
+- Every evaluatable clause MUST have a corresponding node
+- Node IDs follow pattern: `clause_<number>` with dots replaced by underscores
+- Helper nodes can use descriptive names: `preprocess`, `aggregate_section_1`, `final_result`
+
+### 2. Clause-to-Node Type Mapping
+Based on clause_type, select appropriate nodes:
+- `requirement` clauses -> PatternMatchNode, ClassifierNode, or SamplerNode
+- `definition` clauses -> Usually no dedicated node needed (context for other nodes)
+- `condition` clauses -> ClassifierNode with conditional routing
+- `exception` clauses -> PatternMatchNode or ClassifierNode that can short-circuit
+
+### 3. Handling OR Logic (sub_logic: any)
+For a clause with sub-clauses using OR logic, implement short-circuit evaluation:
+
+```yaml
+# If 1.1.a matches, 1.1 is satisfied (skip 1.1.b)
+- id: clause_1_1_a
+  type: ClassifierNode
+  params:
+    categories: [satisfied, not_satisfied]
+  routes:
+    satisfied: clause_1_1_satisfied   # Short-circuit success
+    not_satisfied: clause_1_1_b       # Try next sub-clause
+- id: clause_1_1_b
+  type: ClassifierNode
+  params:
+    categories: [satisfied, not_satisfied]
+  routes:
+    satisfied: clause_1_1_satisfied
+    not_satisfied: clause_1_1_failed
+```
+
+### 4. Handling AND Logic (sub_logic: all)
+For a clause with sub-clauses using AND logic, chain evaluations:
+
+```yaml
+# All sub-clauses must pass
+- id: clause_2_1_a
+  type: PatternMatchNode
+  params:
+    patterns: [...]
+  routes:
+    matched: clause_2_1_b        # Continue to next required clause
+    not_matched: clause_2_1_failed
+- id: clause_2_1_b
+  type: PatternMatchNode
+  params:
+    patterns: [...]
+  routes:
+    matched: clause_2_1_satisfied
+    not_matched: clause_2_1_failed
+```
+
+### 5. Hierarchy Structure
+The `hierarchy` field MUST mirror the document structure exactly:
+- Each clause entry lists the node(s) that implement it
+- Sub-clauses are nested under parent clauses
+- `logic` field indicates how results combine (all/any/null)
+- Include `clause_text` for traceability
+
+### 6. Result Nodes
+Create result nodes to capture outcomes:
+- `<clause_number>_satisfied` - When clause passes
+- `<clause_number>_failed` - When clause fails
+- These can be DataExtractorNode storing the result
+
+### 7. Workflow Flow
+1. Start with preprocessing if needed (TransformNode)
+2. Evaluate clauses in document order
+3. For sections with logic:all, all clauses must pass
+4. For sections with logic:any, first passing clause suffices
+5. Aggregate results at section and policy level
+
+## Example: Complete Workflow for Simple Policy
+
+Input normalized policy with:
+- Clause 1.1 (logic: any) with sub-clauses 1.1.a OR 1.1.b
+- Clause 1.2 (simple, no sub-clauses)
+- Section logic: all (both clauses must be satisfied)
+
+```yaml
+title: Policy Evaluation Workflow
+description: Evaluates policy requirements
+workflow:
+  nodes:
+    - id: preprocess
+      type: TransformNode
+      params:
+        transforms: [normalize_whitespace, strip_html]
+      routes:
+        default: clause_1_1_a
+
+    # Clause 1.1 with OR sub-clauses
+    - id: clause_1_1_a
+      type: ClassifierNode
+      params:
+        categories: [matches, not_matches]
+        descriptions:
+          matches: Content satisfies sub-clause 1.1.a
+          not_matches: Content does not satisfy sub-clause 1.1.a
+      routes:
+        matches: clause_1_2           # Short-circuit: 1.1 satisfied
+        not_matches: clause_1_1_b     # Try 1.1.b
+
+    - id: clause_1_1_b
+      type: ClassifierNode
+      params:
+        categories: [matches, not_matches]
+        descriptions:
+          matches: Content satisfies sub-clause 1.1.b
+          not_matches: Content does not satisfy sub-clause 1.1.b
+      routes:
+        matches: clause_1_2           # 1.1 satisfied via 1.1.b
+        not_matches: policy_failed    # 1.1 failed (neither a nor b)
+
+    # Clause 1.2 (simple)
+    - id: clause_1_2
+      type: PatternMatchNode
+      params:
+        patterns: ["relevant_pattern"]
+        mode: any
+      routes:
+        matched: policy_satisfied
+        not_matched: policy_failed
+
+    # Result nodes
+    - id: policy_satisfied
+      type: DataExtractorNode
+      params:
+        schema:
+          facts: ["Policy evaluation: SATISFIED"]
+      routes: {}
+
+    - id: policy_failed
+      type: DataExtractorNode
+      params:
+        schema:
+          facts: ["Policy evaluation: NOT SATISFIED"]
+      routes: {}
+
+  start_node: preprocess
+
+  hierarchy:
+    - clause_number: "1.1"
+      clause_text: "is made to a person in their capacity as:"
+      nodes: ["clause_1_1_a", "clause_1_1_b"]
+      logic: any
+      sub_groups:
+        - clause_number: "1.1.a"
+          clause_text: "an investor or potential investor"
+          nodes: ["clause_1_1_a"]
+          logic: null
+          sub_groups: []
+        - clause_number: "1.1.b"
+          clause_text: "agent for an investor"
+          nodes: ["clause_1_1_b"]
+          logic: null
+          sub_groups: []
+    - clause_number: "1.2"
+      clause_text: "is not issued exclusively to the public"
+      nodes: ["clause_1_2"]
+      logic: null
+      sub_groups: []
+```
+
+## Important Notes
+- EVERY clause from the normalized policy needs representation in the hierarchy
+- Node IDs must be valid identifiers (no spaces, start with letter/underscore)
+- Terminal nodes have empty routes: `routes: {}`
+- Use descriptive node params that capture the clause intent
+- When a clause has definition type, consider if it provides context for other clauses
+
+Return ONLY the YAML object, no additional text or explanation.
