@@ -1,6 +1,6 @@
 # Policyflow
 
-> [!WARNING]  
+> [!WARNING]
 > This is an experimental/learning project only and is under active development.
 
 An LLM-powered compliance evaluation framework that automatically parses structured policy documents (in markdown) and evaluates any text against the extracted criteria. The system uses AI to intelligently extract requirements, sub-criteria, and logical relationships from policies, then builds dynamic evaluation workflows that provide granular pass/fail results with confidence scores and reasoning for each criterion.
@@ -10,9 +10,8 @@ Ideal for financial regulation compliance, content moderation, contract analysis
 ## Features
 
 - **Generic**: Works with any policy document in markdown format
-- **Dynamic Workflows**: LLM parses policies and generates evaluation workflows
-- **Granular Sub-criteria**: Evaluates sub-criteria individually with early termination
-- **Confidence Gating**: Routes results based on confidence thresholds for human review
+- **Two-Step Parsing**: Normalizes policy then generates workflow for auditability
+- **Explainable**: Node IDs match clause numbers for full traceability
 - **Model-agnostic**: Uses LiteLLM to support 100+ LLM providers
 - **Configurable**: Environment-based configuration with `.env` support
 
@@ -67,6 +66,35 @@ uv run policyflow [COMMAND] [OPTIONS]
 
 #### Commands
 
+##### `parse` - Parse policy into executable workflow
+
+```bash
+uv run policyflow parse [OPTIONS]
+```
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--policy PATH` | `-p` | Path to policy markdown file (required) |
+| `--model TEXT` | `-m` | LiteLLM model identifier |
+| `--save-workflow PATH` | | Save parsed workflow to YAML file |
+| `--save-normalized PATH` | | Save intermediate normalized policy to YAML |
+| `--format TEXT` | | Output format: `pretty` or `yaml` (default: `pretty`) |
+
+Examples:
+```bash
+# Display policy structure
+uv run policyflow parse -p policy.md
+
+# Save workflow for later use
+uv run policyflow parse -p policy.md --save-workflow workflow.yaml
+
+# Save both normalized and workflow files
+uv run policyflow parse -p policy.md --save-normalized norm.yaml --save-workflow workflow.yaml
+
+# Output as YAML
+uv run policyflow parse -p policy.md --format yaml
+```
+
 ##### `eval` - Evaluate text against a policy
 
 ```bash
@@ -99,31 +127,6 @@ uv run policyflow eval -p policy.md -i "text" -m openai/gpt-4o --save-workflow w
 
 # Get minimal output (just pass/fail and confidence)
 uv run policyflow eval -p policy.md -i "text" --format minimal
-```
-
-##### `parse` - Parse and display policy structure
-
-```bash
-uv run policyflow parse [OPTIONS]
-```
-
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--policy PATH` | `-p` | Path to policy markdown file (required) |
-| `--model TEXT` | `-m` | LiteLLM model identifier |
-| `--save-workflow PATH` | | Save parsed workflow to YAML file |
-| `--format TEXT` | | Output format: `pretty` or `yaml` (default: `pretty`) |
-
-Examples:
-```bash
-# Display policy structure
-uv run policyflow parse -p policy.md
-
-# Save workflow for later use
-uv run policyflow parse -p policy.md --save-workflow workflow.yaml
-
-# Output as YAML
-uv run policyflow parse -p policy.md --format yaml
 ```
 
 ##### `batch` - Batch evaluate multiple inputs
@@ -160,65 +163,6 @@ uv run policyflow batch -p policy.md --inputs texts.yaml -o results.yaml
 uv run policyflow batch -w workflow.yaml --inputs texts.yaml -o results.yaml
 ```
 
-##### `normalize` - Normalize policy into structured YAML (Step 1 of two-step parsing)
-
-```bash
-uv run policyflow normalize [OPTIONS]
-```
-
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--policy PATH` | `-p` | Path to policy markdown file (required) |
-| `--output PATH` | `-o` | Output YAML file path (required) |
-| `--model TEXT` | `-m` | LiteLLM model identifier |
-| `--format TEXT` | | Output format: `pretty` or `yaml` (default: `yaml`) |
-
-Creates a normalized representation of the policy with hierarchical numbering (1, 1.1, 1.1.a style) that can be reviewed before workflow generation.
-
-```bash
-uv run policyflow normalize -p policy.md -o normalized.yaml
-```
-
-##### `generate-workflow` - Generate workflow from normalized policy (Step 2 of two-step parsing)
-
-```bash
-uv run policyflow generate-workflow [OPTIONS]
-```
-
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--normalized PATH` | `-n` | Path to normalized policy YAML (required) |
-| `--output PATH` | `-o` | Output workflow YAML file (required) |
-| `--model TEXT` | `-m` | LiteLLM model identifier |
-| `--format TEXT` | | Output format: `pretty` or `yaml` (default: `yaml`) |
-
-```bash
-uv run policyflow generate-workflow -n normalized.yaml -o workflow.yaml
-```
-
-##### `parse-two-step` - Complete two-step parsing in one command
-
-```bash
-uv run policyflow parse-two-step [OPTIONS]
-```
-
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--policy PATH` | `-p` | Path to policy markdown file (required) |
-| `--output-dir PATH` | `-d` | Output directory for artifacts (required) |
-| `--model TEXT` | `-m` | LiteLLM model identifier |
-| `--prefix TEXT` | | Filename prefix for outputs (default: `policy`) |
-
-Creates both `{prefix}_normalized.yaml` and `{prefix}_workflow.yaml` in the output directory.
-
-```bash
-# Creates ./output/policy_normalized.yaml and ./output/policy_workflow.yaml
-uv run policyflow parse-two-step -p policy.md -d ./output
-
-# With custom prefix
-uv run policyflow parse-two-step -p policy.md -d ./output --prefix my_policy
-```
-
 ### Python API
 
 Run with `uv run python your_script.py` or in a `uv run python` REPL:
@@ -236,15 +180,10 @@ print(f"Policy satisfied: {result.policy_satisfied}")
 print(f"Confidence: {result.overall_confidence:.0%}")
 print(f"Needs review: {result.needs_review}")
 
-# Per-criterion breakdown
-for cr in result.criterion_results:
+# Per-clause breakdown
+for cr in result.clause_results:
     status = "MET" if cr.met else "NOT MET"
-    print(f"{cr.criterion_name}: {status} ({cr.confidence:.0%})")
-
-    # Sub-criterion details (if any)
-    for sub in cr.sub_results:
-        sub_status = "MET" if sub.met else "NOT MET"
-        print(f"  - {sub.sub_criterion_name}: {sub_status}")
+    print(f"{cr.clause_name}: {status} ({cr.confidence:.0%})")
 ```
 
 ### Custom Configuration
@@ -277,14 +216,16 @@ The main package exports the following:
 | Function | Description |
 |----------|-------------|
 | `evaluate()` | Main entry point - evaluate text against a policy |
-| `parse_policy()` | Parse policy markdown into a `ParsedPolicy` object |
+| `parse_policy()` | Parse policy markdown into a `ParsedWorkflowPolicy` object |
+| `normalize_policy()` | Parse policy into normalized structure (step 1) |
+| `generate_workflow_from_normalized()` | Generate workflow from normalized policy (step 2) |
 | `get_config()` | Get current `WorkflowConfig` from environment |
 
 #### Classes
 
 | Class | Description |
 |-------|-------------|
-| `PolicyEvaluationWorkflow` | Workflow runner for evaluating text against a parsed policy |
+| `DynamicWorkflowBuilder` | Workflow runner for evaluating text against a parsed workflow |
 | `WorkflowConfig` | Configuration for evaluation (model, retries, cache, etc.) |
 | `ConfidenceGateConfig` | Confidence threshold configuration |
 
@@ -292,11 +233,12 @@ The main package exports the following:
 
 | Model | Description |
 |-------|-------------|
-| `ParsedPolicy` | Parsed policy structure with criteria |
-| `Criterion` | A single criterion from a policy |
+| `NormalizedPolicy` | Normalized policy with sections and clauses |
+| `ParsedWorkflowPolicy` | Parsed workflow with hierarchy |
 | `EvaluationResult` | Complete evaluation result |
-| `CriterionResult` | Result for a single criterion |
-| `SubCriterionResult` | Result for a sub-criterion |
+| `ClauseResult` | Result for a single clause |
+| `Clause` | A single clause from a policy |
+| `Section` | A section containing clauses |
 
 #### Enums
 
@@ -304,6 +246,7 @@ The main package exports the following:
 |------|--------|-------------|
 | `LogicOperator` | `ALL`, `ANY` | How criteria combine (AND/OR) |
 | `ConfidenceLevel` | `HIGH`, `MEDIUM`, `LOW` | Confidence classification |
+| `ClauseType` | `REQUIREMENT`, `DEFINITION`, `CONDITION`, `EXCEPTION`, `REFERENCE` | Clause type |
 
 #### Utilities
 
@@ -313,37 +256,28 @@ The main package exports the following:
 
 ## Architecture
 
-The evaluator uses a dynamic workflow built with PocketFlow:
+The evaluator uses a two-step parsing process:
 
 ```
-Policy.md → Parse → Extract Criteria
-                         │
-                         ▼
+Policy.md → Normalize → NormalizedPolicy (YAML)
+                              │
+                              ▼
+              Generate Workflow from Normalized
+                              │
+                              ▼
+              ParsedWorkflowPolicy (YAML)
+               - nodes with clause_X_X IDs
+               - hierarchy mapping
+                              │
+                              ▼
               ┌──────────────────────┐
-              │  For each criterion  │
+              │  DynamicWorkflow     │
               │                      │
-              │  Has sub-criteria?   │
-              │    YES → SubCriterionNode chain with early termination
-              │    NO  → CriterionEvaluationNode
+              │  Executes nodes      │
+              │  based on routes     │
               └──────────────────────┘
-                         │
-                         ▼
-              ┌──────────────────────┐
-              │  ConfidenceGateNode  │
-              │                      │
-              │  Routes based on     │
-              │  confidence levels   │
-              └──────────────────────┘
-                         │
-                         ▼
-              ┌──────────────────────┐
-              │  ResultAggregator    │
-              │                      │
-              │  Combines results    │
-              │  with policy logic   │
-              └──────────────────────┘
-                         │
-                         ▼
+                              │
+                              ▼
                 EvaluationResult
 ```
 
@@ -355,22 +289,15 @@ EvaluationResult:
   overall_confidence: float   # 0.0-1.0
   confidence_level: str       # "high", "medium", "low"
   needs_review: bool          # Human review recommended?
-  low_confidence_criteria: [] # IDs needing attention
-  criterion_results: [
-    CriterionResult:
-      criterion_id: str
-      criterion_name: str
+  low_confidence_clauses: []  # IDs needing attention
+  clause_results: [
+    ClauseResult:
+      clause_id: str
+      clause_name: str
       met: bool
       reasoning: str
       confidence: float
-      sub_results: [          # For criteria with sub-criteria
-        SubCriterionResult:
-          sub_criterion_id: str
-          sub_criterion_name: str
-          met: bool
-          reasoning: str
-          confidence: float
-      ]
+      sub_results: [...]      # Nested clause results
   ]
 ```
 
@@ -381,36 +308,36 @@ EvaluationResult:
 For more control over the evaluation process:
 
 ```python
-from policyflow import parse_policy, PolicyEvaluationWorkflow, WorkflowConfig
+from policyflow import parse_policy, DynamicWorkflowBuilder, WorkflowConfig
 
-# Parse policy separately (useful for caching)
+# Parse policy (uses two-step process internally)
 policy_text = open("policy.md").read()
-parsed_policy = parse_policy(policy_text)
+parsed_workflow = parse_policy(policy_text)
 
-# Create workflow and run multiple evaluations
+# Create workflow builder and run evaluations
 config = WorkflowConfig()
-workflow = PolicyEvaluationWorkflow(parsed_policy, config)
+builder = DynamicWorkflowBuilder(parsed_workflow, config)
 
 texts = ["First text to evaluate", "Second text to evaluate"]
-results = [workflow.run(text) for text in texts]
+results = [builder.run(text) for text in texts]
 ```
 
-### Working with Parsed Policies
+### Working with Normalized Policies
 
 ```python
-from policyflow import parse_policy, LogicOperator
+from policyflow.parser import normalize_policy, generate_workflow_from_normalized
+from policyflow.models import NormalizedPolicy
 
-policy = parse_policy(open("policy.md").read())
+# Step 1: Normalize
+normalized = normalize_policy(open("policy.md").read())
+normalized.save_yaml("normalized.yaml")
 
-print(f"Policy: {policy.title}")
-print(f"Logic: {policy.logic}")  # LogicOperator.ALL or LogicOperator.ANY
+# Review/edit normalized.yaml if needed...
 
-for criterion in policy.criteria:
-    print(f"  {criterion.id}: {criterion.name}")
-    if criterion.sub_criteria:
-        print(f"    Sub-logic: {criterion.sub_logic}")
-        for sub in criterion.sub_criteria:
-            print(f"      - {sub.name}")
+# Step 2: Generate workflow
+normalized = NormalizedPolicy.load_yaml("normalized.yaml")
+workflow = generate_workflow_from_normalized(normalized)
+workflow.save_yaml("workflow.yaml")
 ```
 
 ### YAML Serialization
@@ -420,44 +347,40 @@ All data models support YAML serialization via `YAMLMixin`:
 ```python
 from policyflow import parse_policy, evaluate
 
-# Save parsed policy for reuse
-policy = parse_policy(open("policy.md").read())
-policy.save_yaml("parsed_policy.yaml")
+# Save parsed workflow for reuse
+workflow = parse_policy(open("policy.md").read())
+workflow.save_yaml("workflow.yaml")
 
 # Save evaluation results
 result = evaluate(input_text="...", policy_path="policy.md")
 result.save_yaml("evaluation_result.yaml")
 
 # Load from YAML
-from policyflow import ParsedPolicy, EvaluationResult
-policy = ParsedPolicy.load_yaml("parsed_policy.yaml")
+from policyflow.models import ParsedWorkflowPolicy, EvaluationResult
+workflow = ParsedWorkflowPolicy.load_yaml("workflow.yaml")
 result = EvaluationResult.load_yaml("evaluation_result.yaml")
 ```
 
 ### Available Node Types
 
-The workflow system includes 13 node types for building custom evaluation pipelines:
+The workflow system includes node types for building evaluation pipelines:
 
 | Node | Description |
 |------|-------------|
 | `LLMNode` | Base node for LLM-powered evaluation |
-| `CriterionEvaluationNode` | Evaluates a single criterion |
-| `SubCriterionNode` | Evaluates sub-criteria with early termination |
 | `ConfidenceGateNode` | Routes based on confidence thresholds |
-| `ResultAggregatorNode` | Combines results with policy logic |
 | `TransformNode` | Transforms input text (lowercase, truncate, etc.) |
 | `LengthGateNode` | Routes based on text length |
 | `KeywordScorerNode` | Scores text based on keyword presence |
 | `PatternMatchNode` | Matches text against regex patterns |
 | `DataExtractorNode` | Extracts structured data from text |
-| `SamplerNode` | Samples or chunks text for processing |
+| `SamplerNode` | Runs multiple evaluations for consensus |
 | `ClassifierNode` | Classifies text into categories |
 | `SentimentNode` | Analyzes text sentiment |
 
 Access nodes via:
 ```python
 from policyflow.nodes import (
-    CriterionEvaluationNode,
     PatternMatchNode,
     ClassifierNode,
     # ... etc
@@ -481,7 +404,7 @@ PHOENIX_ENABLED=true uv run policyflow eval -p policy.md -i "text"
 # View traces at http://localhost:6007
 ```
 
-See [ARIZE_PHOENIX.md](ARIZE_PHOENIX.md) for full documentation.
+See [plans/ARIZE_PHOENIX.md](plans/ARIZE_PHOENIX.md) for full documentation.
 
 ## Testing
 
@@ -501,15 +424,15 @@ uv run pytest
 uv run pytest -v
 
 # Run a specific test file
-uv run pytest tests/test_criterion.py
+uv run pytest tests/test_workflow_builder.py
 
 # Run tests matching a pattern
 uv run pytest -k "confidence"
 ```
 
 The test suite covers:
-- **Node types**: Criterion evaluation, sub-criterion logic, confidence gating, aggregation
-- **Utilities**: Pattern matching, text transforms, classification, sampling
+- **Node types**: Confidence gating, pattern matching, classification, etc.
+- **Workflow builder**: Validation, max iterations, routing
 
 Tests use mocked LLM responses to run quickly without API calls.
 

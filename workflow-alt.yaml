@@ -195,7 +195,7 @@ workflow:
     - clause_1_4
     sub_groups: []
     logic: null
-normalized_policy_ref: normalized.yaml
+normalized_policy_ref: null
 raw_text: 'A personal recommendation means a recommendation that:
 
 

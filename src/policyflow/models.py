@@ -4,13 +4,10 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Self
+from typing import Self
 
 import yaml
 from pydantic import BaseModel, Field
-
-if TYPE_CHECKING:
-    from .nodes.criterion import CriterionResult
 
 
 class YAMLMixin:
@@ -62,37 +59,8 @@ class ClauseType(str, Enum):
     REFERENCE = "reference"  # Reference to external document
 
 
-class Criterion(BaseModel):
-    """A single criterion extracted from a policy."""
-
-    id: str = Field(description="Unique identifier, e.g., 'criterion_1'")
-    name: str = Field(description="Short name for the criterion")
-    description: str = Field(description="Full text of the criterion")
-    sub_criteria: list["Criterion"] = Field(
-        default_factory=list,
-        description="Nested sub-criteria (for OR within AND, etc.)",
-    )
-    sub_logic: LogicOperator | None = Field(
-        default=None,
-        description="Logic for combining sub-criteria",
-    )
-
-
-class ParsedPolicy(YAMLMixin, BaseModel):
-    """Complete parsed policy structure."""
-
-    title: str = Field(description="Policy title or name")
-    description: str = Field(description="Overall policy description")
-    criteria: list[Criterion] = Field(description="Top-level criteria")
-    logic: LogicOperator = Field(
-        default=LogicOperator.ALL,
-        description="How top-level criteria are combined",
-    )
-    raw_text: str = Field(description="Original policy markdown text")
-
-
 # ============================================================================
-# Normalized Policy Models (Two-Step Parser)
+# Normalized Policy Models
 # ============================================================================
 
 
@@ -205,6 +173,11 @@ class NormalizedPolicy(YAMLMixin, BaseModel):
         return None
 
 
+# ============================================================================
+# Evaluation Result Models
+# ============================================================================
+
+
 class ConfidenceLevel(str, Enum):
     """Confidence level classification."""
 
@@ -213,16 +186,35 @@ class ConfidenceLevel(str, Enum):
     LOW = "low"  # Below low threshold
 
 
+class ClauseResult(BaseModel):
+    """Evaluation result for a single clause."""
+
+    clause_id: str = Field(description="ID of the evaluated clause")
+    clause_name: str = Field(description="Name/title of the clause")
+    met: bool = Field(description="Whether the clause is satisfied")
+    reasoning: str = Field(description="Explanation for the evaluation")
+    confidence: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Confidence score 0.0-1.0",
+    )
+    sub_results: list["ClauseResult"] = Field(
+        default_factory=list,
+        description="Results for sub-clauses if any",
+    )
+
+
 class EvaluationResult(YAMLMixin, BaseModel):
     """Complete evaluation result."""
 
     policy_satisfied: bool = Field(
         description="Whether the overall policy is satisfied"
     )
-    input_text: str = Field(description="The text that was evaluated")
+    input_text: str = Field(default="", description="The text that was evaluated")
     policy_title: str = Field(description="Title of the policy used")
-    criterion_results: list[CriterionResult] = Field(
-        description="Per-criterion evaluation results"
+    clause_results: list[ClauseResult] = Field(
+        default_factory=list,
+        description="Per-clause evaluation results",
     )
     overall_reasoning: str = Field(description="Summary of the evaluation")
     overall_confidence: float = Field(
@@ -238,14 +230,14 @@ class EvaluationResult(YAMLMixin, BaseModel):
         default=False,
         description="Whether human review is recommended",
     )
-    low_confidence_criteria: list[str] = Field(
+    low_confidence_clauses: list[str] = Field(
         default_factory=list,
-        description="IDs of criteria with low confidence scores",
+        description="IDs of clauses with low confidence scores",
     )
 
 
 # ============================================================================
-# Dynamic Workflow Models
+# Workflow Models
 # ============================================================================
 
 
@@ -262,27 +254,6 @@ class NodeConfig(BaseModel):
         default_factory=dict,
         description="Action -> next node ID mapping",
     )
-
-
-class WorkflowDefinition(BaseModel):
-    """Definition of a workflow's node graph."""
-
-    nodes: list[NodeConfig] = Field(description="List of node configurations")
-    start_node: str = Field(description="ID of the starting node")
-
-
-class ParsedWorkflowPolicy(YAMLMixin, BaseModel):
-    """Policy parsed into a dynamic workflow definition."""
-
-    title: str = Field(description="Policy title")
-    description: str = Field(description="Policy description")
-    workflow: WorkflowDefinition = Field(description="Workflow configuration")
-    raw_text: str = Field(default="", description="Original policy markdown")
-
-
-# ============================================================================
-# Hierarchical Workflow Models (Two-Step Parser - Step 2)
-# ============================================================================
 
 
 class NodeGroup(BaseModel):
@@ -338,8 +309,8 @@ class HierarchicalWorkflowDefinition(BaseModel):
         return [n for n in self.nodes if n.id in group.nodes]
 
 
-class ParsedWorkflowPolicyV2(YAMLMixin, BaseModel):
-    """Enhanced policy with hierarchical workflow and clause mapping.
+class ParsedWorkflowPolicy(YAMLMixin, BaseModel):
+    """Policy parsed into a hierarchical workflow definition.
 
     This is the output of the two-step parsing process, containing:
     - The workflow definition with all nodes
@@ -357,12 +328,3 @@ class ParsedWorkflowPolicyV2(YAMLMixin, BaseModel):
         description="Path to the normalized policy YAML this was generated from",
     )
     raw_text: str = Field(default="", description="Original policy markdown")
-
-
-def _rebuild_models():
-    """Rebuild models that use forward references from node modules."""
-    from .nodes.criterion import CriterionResult
-    EvaluationResult.model_rebuild()
-
-
-_rebuild_models()

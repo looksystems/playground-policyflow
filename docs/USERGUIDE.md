@@ -165,6 +165,7 @@ policyflow parse [OPTIONS]
 | `--policy` | `-p` | Path to policy markdown file (required) |
 | `--model` | `-m` | LiteLLM model identifier |
 | `--save-workflow` | | Save parsed workflow to YAML file |
+| `--save-normalized` | | Save intermediate normalized policy to YAML |
 | `--format` | | Output format: `pretty` or `yaml` |
 
 **Examples:**
@@ -174,6 +175,9 @@ policyflow parse -p policy.md
 
 # Save workflow for later use
 policyflow parse -p policy.md --save-workflow workflow.yaml
+
+# Save both normalized and workflow files
+policyflow parse -p policy.md --save-normalized norm.yaml --save-workflow workflow.yaml
 
 # Output as YAML
 policyflow parse -p policy.md --format yaml
@@ -206,67 +210,6 @@ policyflow batch [OPTIONS]
 policyflow batch -w workflow.yaml --inputs texts.yaml -o results.yaml
 ```
 
-### normalize - Normalize policy document (Step 1)
-
-```bash
-policyflow normalize [OPTIONS]
-```
-
-**Options:**
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--policy` | `-p` | Path to policy markdown file (required) |
-| `--output` | `-o` | Output YAML file path (required) |
-| `--model` | `-m` | LiteLLM model identifier |
-| `--format` | | Output format: `pretty` or `yaml` |
-
-**Example:**
-```bash
-# Normalize a policy into structured format
-policyflow normalize -p policy.md -o normalized.yaml
-```
-
-### generate-workflow - Generate workflow from normalized policy (Step 2)
-
-```bash
-policyflow generate-workflow [OPTIONS]
-```
-
-**Options:**
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--normalized` | `-n` | Path to normalized policy YAML (required) |
-| `--output` | `-o` | Output workflow YAML file (required) |
-| `--model` | `-m` | LiteLLM model identifier |
-| `--format` | | Output format: `pretty` or `yaml` |
-
-**Example:**
-```bash
-# Generate workflow from normalized policy
-policyflow generate-workflow -n normalized.yaml -o workflow.yaml
-```
-
-### parse-two-step - Complete two-step parsing
-
-```bash
-policyflow parse-two-step [OPTIONS]
-```
-
-**Options:**
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--policy` | `-p` | Path to policy markdown file (required) |
-| `--output-dir` | `-d` | Output directory for artifacts (required) |
-| `--model` | `-m` | LiteLLM model identifier |
-| `--prefix` | | Filename prefix for outputs (default: `policy`) |
-
-**Example:**
-```bash
-# Parse policy in two steps, saving both artifacts
-policyflow parse-two-step -p policy.md -d ./output/
-# Creates: ./output/policy_normalized.yaml and ./output/policy_workflow.yaml
-```
-
 ## Two-Step Parser
 
 The two-step parser provides enhanced control, auditability, and explainability for policy parsing.
@@ -278,7 +221,7 @@ Raw Policy Markdown
         ↓ (Step 1: Normalize)
 NormalizedPolicy (YAML)  ← Review/edit before workflow generation
         ↓ (Step 2: Generate Workflow)
-ParsedWorkflowPolicyV2 (YAML)  ← Node IDs match clause numbers
+ParsedWorkflowPolicy (YAML)  ← Node IDs match clause numbers
 ```
 
 ### Why Two Steps?
@@ -356,12 +299,12 @@ workflow:
 ### Python API for Two-Step Parsing
 
 ```python
-from policyflow.parser import (
+from policyflow import (
+    parse_policy,
     normalize_policy,
     generate_workflow_from_normalized,
-    parse_policy_two_step,
+    NormalizedPolicy,
 )
-from policyflow.models import NormalizedPolicy
 
 # Step 1: Normalize
 with open("policy.md") as f:
@@ -375,8 +318,8 @@ normalized = NormalizedPolicy.load_yaml("normalized.yaml")
 workflow = generate_workflow_from_normalized(normalized)
 workflow.save_yaml("workflow.yaml")
 
-# Or do both steps at once
-workflow = parse_policy_two_step(
+# Or do both steps at once with parse_policy()
+workflow = parse_policy(
     policy_markdown,
     save_normalized="normalized.yaml"
 )
@@ -387,24 +330,24 @@ workflow = parse_policy_two_step(
 Map evaluation results back to clause numbers:
 
 ```python
-from policyflow.clause_mapping import (
-    extract_clause_results,
-    format_clause_results_report,
-    summarize_results,
-)
+from policyflow import EvaluationResult
 
-# After workflow execution
-results = extract_clause_results(shared_store, normalized_policy)
-report = format_clause_results_report(results)
-print(report)
-# [+] Clause 1.1: PASS (92% confidence)
-#     Reasoning: Content addresses investor directly
-#   [+] Clause 1.1.a: PASS (95% confidence)
-#   [-] Clause 1.1.b: FAIL (88% confidence)
+# After workflow execution, access the result
+result: EvaluationResult = shared["result"]
 
-summary = summarize_results(results)
-print(f"Pass rate: {summary['pass_rate']:.0%}")
-print(f"Failed clauses: {summary['failed_clauses']}")
+# Per-clause breakdown
+for cr in result.clause_results:
+    status = "PASS" if cr.met else "FAIL"
+    print(f"Clause {cr.clause_id}: {status} ({cr.confidence:.0%})")
+    print(f"  Reasoning: {cr.reasoning}")
+
+# Example output:
+# Clause 1.1: PASS (92%)
+#   Reasoning: Content addresses investor directly
+# Clause 1.1.a: PASS (95%)
+#   Reasoning: Clear investor status reference
+# Clause 1.1.b: FAIL (88%)
+#   Reasoning: No agent relationship mentioned
 ```
 
 ## Python API
@@ -428,7 +371,7 @@ print(f"Confidence: {result.overall_confidence:.0%}")
 ```python
 from policyflow import (
     parse_policy,
-    PolicyEvaluationWorkflow,
+    DynamicWorkflowBuilder,
     WorkflowConfig,
 )
 
@@ -440,32 +383,34 @@ config = WorkflowConfig(
 
 # Parse the policy
 with open("policy.md") as f:
-    policy = parse_policy(f.read(), config)
-
-# Create workflow
-workflow = PolicyEvaluationWorkflow(policy, config)
+    workflow = parse_policy(f.read(), config)
 
 # Save for later use
-workflow.save("workflow.yaml")
+workflow.save_yaml("workflow.yaml")
 
-# Evaluate
-result = workflow.run("Text to evaluate")
+# Create builder and evaluate
+builder = DynamicWorkflowBuilder(workflow, config)
+shared = builder.run("Text to evaluate")
+result = shared["result"]
 
 # Access detailed results
-for criterion in result.criterion_results:
-    print(f"{criterion.criterion_name}: {'MET' if criterion.met else 'NOT MET'}")
-    print(f"  Reasoning: {criterion.reasoning}")
-    print(f"  Confidence: {criterion.confidence:.0%}")
+for clause in result.clause_results:
+    print(f"{clause.clause_name}: {'MET' if clause.met else 'NOT MET'}")
+    print(f"  Reasoning: {clause.reasoning}")
+    print(f"  Confidence: {clause.confidence:.0%}")
 ```
 
 ### Loading Cached Workflows
 
 ```python
-from policyflow import PolicyEvaluationWorkflow, WorkflowConfig
+from policyflow import DynamicWorkflowBuilder, WorkflowConfig
+from policyflow.models import ParsedWorkflowPolicy
 
 config = WorkflowConfig()
-workflow = PolicyEvaluationWorkflow.load("workflow.yaml", config)
-result = workflow.run("Text to evaluate")
+workflow = ParsedWorkflowPolicy.load_yaml("workflow.yaml")
+builder = DynamicWorkflowBuilder(workflow, config)
+shared = builder.run("Text to evaluate")
+result = shared["result"]
 ```
 
 ### Controlling Max Iterations
@@ -492,13 +437,14 @@ If the limit is exceeded, a `RuntimeError` is raised with a message indicating a
 ### YAML Serialization
 
 ```python
-from policyflow import EvaluationResult, ParsedPolicy
+from policyflow import EvaluationResult
+from policyflow.models import ParsedWorkflowPolicy
 
 # Save result to YAML
 result.save_yaml("result.yaml")
 
-# Load policy from YAML
-policy = ParsedPolicy.load_yaml("workflow.yaml")
+# Load workflow from YAML
+workflow = ParsedWorkflowPolicy.load_yaml("workflow.yaml")
 
 # Convert to YAML string
 yaml_str = result.to_yaml()
@@ -580,21 +526,20 @@ Regenerate the workflow when:
 
 ```yaml
 policy_satisfied: true          # Overall policy result
-input_text: "..."               # The evaluated text
 policy_title: "Policy Name"     # Extracted policy title
 overall_confidence: 0.85        # Average confidence (0.0-1.0)
 overall_reasoning: "..."        # Summary explanation
 confidence_level: high          # high, medium, or low
 needs_review: false             # Flagged for human review?
-low_confidence_criteria: []     # IDs of uncertain criteria
+low_confidence_clauses: []      # IDs of uncertain clauses
 
-criterion_results:              # Per-criterion breakdown
-  - criterion_id: criterion_1
-    criterion_name: "First Criterion"
+clause_results:                 # Per-clause breakdown
+  - clause_id: clause_1_1
+    clause_name: "First Clause"
     met: true
     reasoning: "..."
     confidence: 0.9
-    sub_results: []             # Sub-criterion results if any
+    sub_results: []             # Sub-clause results if any
 ```
 
 ### Confidence Levels
@@ -610,7 +555,7 @@ criterion_results:              # Per-criterion breakdown
 Results are flagged for review when:
 - `confidence_level` is `low` or `medium`
 - `needs_review` is `true`
-- `low_confidence_criteria` is not empty
+- `low_confidence_clauses` is not empty
 
 ## Best Practices
 
@@ -630,10 +575,10 @@ Results are flagged for review when:
 
 ### Handling Low Confidence
 
-1. **Review flagged results**: Check `needs_review` and `low_confidence_criteria`
-2. **Refine policy wording**: Ambiguous criteria cause low confidence
-3. **Add context**: More detailed criterion descriptions help
-4. **Consider sub-criteria**: Break complex criteria into simpler parts
+1. **Review flagged results**: Check `needs_review` and `low_confidence_clauses`
+2. **Refine policy wording**: Ambiguous clauses cause low confidence
+3. **Add context**: More detailed clause descriptions help
+4. **Consider sub-clauses**: Break complex clauses into simpler parts
 
 ### Production Deployment
 

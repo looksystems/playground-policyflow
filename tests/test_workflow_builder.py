@@ -6,7 +6,7 @@ import pytest
 from pocketflow import Node
 
 from policyflow.workflow_builder import DynamicWorkflowBuilder
-from policyflow.models import ParsedWorkflowPolicy, WorkflowDefinition, NodeConfig
+from policyflow.models import ParsedWorkflowPolicy, HierarchicalWorkflowDefinition, NodeConfig
 from policyflow.nodes.registry import register_node
 
 
@@ -36,7 +36,7 @@ class TestWorkflowValidation:
         policy = ParsedWorkflowPolicy(
             title="Test",
             description="Test policy",
-            workflow=WorkflowDefinition(
+            workflow=HierarchicalWorkflowDefinition(
                 nodes=[
                     NodeConfig(
                         id="node_a",
@@ -52,6 +52,7 @@ class TestWorkflowValidation:
                     ),
                 ],
                 start_node="node_a",
+                hierarchy=[],
             ),
         )
 
@@ -71,7 +72,7 @@ class TestWorkflowValidation:
         policy = ParsedWorkflowPolicy(
             title="Test",
             description="Test policy",
-            workflow=WorkflowDefinition(
+            workflow=HierarchicalWorkflowDefinition(
                 nodes=[
                     NodeConfig(
                         id="node_a",
@@ -93,6 +94,7 @@ class TestWorkflowValidation:
                     ),
                 ],
                 start_node="node_a",
+                hierarchy=[],
             ),
         )
 
@@ -110,7 +112,7 @@ class TestWorkflowValidation:
         policy = ParsedWorkflowPolicy(
             title="Test",
             description="Test policy",
-            workflow=WorkflowDefinition(
+            workflow=HierarchicalWorkflowDefinition(
                 nodes=[
                     NodeConfig(
                         id="node_a",
@@ -126,6 +128,7 @@ class TestWorkflowValidation:
                     ),
                 ],
                 start_node="node_a",
+                hierarchy=[],
             ),
         )
 
@@ -152,7 +155,7 @@ class TestMaxIterations:
         policy = ParsedWorkflowPolicy(
             title="Test",
             description="Test policy",
-            workflow=WorkflowDefinition(
+            workflow=HierarchicalWorkflowDefinition(
                 nodes=[
                     NodeConfig(
                         id="node_a",
@@ -168,6 +171,7 @@ class TestMaxIterations:
                     ),
                 ],
                 start_node="node_a",
+                hierarchy=[],
             ),
         )
 
@@ -187,7 +191,7 @@ class TestMaxIterations:
         policy = ParsedWorkflowPolicy(
             title="Test",
             description="Test policy",
-            workflow=WorkflowDefinition(
+            workflow=HierarchicalWorkflowDefinition(
                 nodes=[
                     NodeConfig(
                         id="node_a",
@@ -203,6 +207,7 @@ class TestMaxIterations:
                     ),
                 ],
                 start_node="node_a",
+                hierarchy=[],
             ),
         )
 
@@ -216,7 +221,7 @@ class TestMaxIterations:
         policy = ParsedWorkflowPolicy(
             title="Test",
             description="Test policy",
-            workflow=WorkflowDefinition(
+            workflow=HierarchicalWorkflowDefinition(
                 nodes=[
                     NodeConfig(
                         id="node_a",
@@ -226,6 +231,7 @@ class TestMaxIterations:
                     ),
                 ],
                 start_node="node_a",
+                hierarchy=[],
             ),
         )
 

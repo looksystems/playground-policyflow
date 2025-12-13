@@ -6,11 +6,12 @@ import pytest
 
 from policyflow.config import WorkflowConfig, ConfidenceGateConfig
 from policyflow.models import (
-    Criterion,
-    ParsedPolicy,
+    Clause,
+    Section,
+    NormalizedPolicy,
     LogicOperator,
+    ClauseType,
 )
-from policyflow.nodes.criterion import CriterionResult
 
 
 @pytest.fixture
@@ -56,127 +57,121 @@ def mock_llm_response():
 
 
 @pytest.fixture
-def sample_criterion():
-    """Return a sample Criterion for testing."""
-    return Criterion(
-        id="criterion_1",
-        name="Test Criterion",
-        description="This is a test criterion for unit testing",
+def sample_clause():
+    """Return a sample Clause for testing."""
+    return Clause(
+        number="1.1",
+        title="Test Clause",
+        text="This is a test clause for unit testing",
+        clause_type=ClauseType.REQUIREMENT,
     )
 
 
 @pytest.fixture
-def sample_criterion_with_sub():
-    """Return a Criterion with sub-criteria for testing."""
-    return Criterion(
-        id="criterion_1",
-        name="Parent Criterion",
-        description="Parent criterion with sub-criteria",
-        sub_criteria=[
-            Criterion(
-                id="sub_1",
-                name="Sub Criterion 1",
-                description="First sub-criterion",
+def sample_clause_with_sub():
+    """Return a Clause with sub-clauses for testing."""
+    return Clause(
+        number="1.1",
+        title="Parent Clause",
+        text="Parent clause with sub-clauses",
+        clause_type=ClauseType.REQUIREMENT,
+        sub_clauses=[
+            Clause(
+                number="1.1.a",
+                title="Sub Clause 1",
+                text="First sub-clause",
             ),
-            Criterion(
-                id="sub_2",
-                name="Sub Criterion 2",
-                description="Second sub-criterion",
+            Clause(
+                number="1.1.b",
+                title="Sub Clause 2",
+                text="Second sub-clause",
             ),
         ],
-        sub_logic=LogicOperator.ALL,
+        logic=LogicOperator.ALL,
     )
 
 
 @pytest.fixture
-def sample_parsed_policy(sample_criterion):
-    """Return a sample ParsedPolicy for testing."""
-    return ParsedPolicy(
+def sample_normalized_policy(sample_clause):
+    """Return a sample NormalizedPolicy for testing."""
+    return NormalizedPolicy(
         title="Test Policy",
         description="A test policy for unit testing",
-        criteria=[sample_criterion],
+        sections=[
+            Section(
+                number="1",
+                title="Test Section",
+                clauses=[sample_clause],
+            )
+        ],
         logic=LogicOperator.ALL,
         raw_text="# Test Policy\n\nThis is a test.",
     )
 
 
 @pytest.fixture
-def sample_criterion_result():
-    """Return a sample CriterionResult for testing."""
-    return CriterionResult(
-        criterion_id="criterion_1",
-        criterion_name="Test Criterion",
-        met=True,
-        reasoning="The criterion was met because...",
-        confidence=0.85,
-    )
+def sample_clause_result():
+    """Return a sample clause result dict for testing."""
+    return {
+        "clause_id": "clause_1_1",
+        "clause_name": "Test Clause",
+        "met": True,
+        "reasoning": "The clause was met because...",
+        "confidence": 0.85,
+    }
 
 
 @pytest.fixture
-def sample_criterion_results():
-    """Return multiple CriterionResults for testing aggregation."""
+def sample_clause_results():
+    """Return multiple clause results for testing aggregation."""
     return {
-        "criterion_1": CriterionResult(
-            criterion_id="criterion_1",
-            criterion_name="First Criterion",
-            met=True,
-            reasoning="First criterion met",
-            confidence=0.9,
-        ),
-        "criterion_2": CriterionResult(
-            criterion_id="criterion_2",
-            criterion_name="Second Criterion",
-            met=True,
-            reasoning="Second criterion met",
-            confidence=0.8,
-        ),
-        "criterion_3": CriterionResult(
-            criterion_id="criterion_3",
-            criterion_name="Third Criterion",
-            met=False,
-            reasoning="Third criterion not met",
-            confidence=0.7,
-        ),
+        "clause_1_1_result": {
+            "met": True,
+            "reasoning": "First clause met",
+            "confidence": 0.9,
+        },
+        "clause_1_2_result": {
+            "met": True,
+            "reasoning": "Second clause met",
+            "confidence": 0.8,
+        },
+        "clause_1_3_result": {
+            "met": False,
+            "reasoning": "Third clause not met",
+            "confidence": 0.7,
+        },
     }
 
 
 @pytest.fixture
 def high_confidence_results():
-    """Return criterion results with all high confidence scores."""
+    """Return results with all high confidence scores."""
     return {
-        "criterion_1": CriterionResult(
-            criterion_id="criterion_1",
-            criterion_name="High Confidence 1",
-            met=True,
-            reasoning="Very confident",
-            confidence=0.95,
-        ),
-        "criterion_2": CriterionResult(
-            criterion_id="criterion_2",
-            criterion_name="High Confidence 2",
-            met=True,
-            reasoning="Very confident",
-            confidence=0.90,
-        ),
+        "clause_1_result": {
+            "met": True,
+            "reasoning": "Very confident",
+            "confidence": 0.95,
+        },
+        "clause_2_result": {
+            "met": True,
+            "reasoning": "Very confident",
+            "confidence": 0.90,
+        },
     }
 
 
 @pytest.fixture
 def low_confidence_results():
-    """Return criterion results with some low confidence scores."""
+    """Return results with some low confidence scores."""
     return {
-        "criterion_1": CriterionResult(
-            criterion_id="criterion_1",
-            criterion_name="Low Confidence",
-            met=True,
-            reasoning="Not very confident",
-            confidence=0.3,
-        ),
-        "criterion_2": CriterionResult(
-            criterion_id="criterion_2",
-            criterion_name="Medium Confidence",
-            met=True,
-            reasoning="Somewhat confident",
-            confidence=0.6,
-        ),
+        "clause_1_result": {
+            "met": True,
+            "reasoning": "Not very confident",
+            "confidence": 0.3,
+        },
+        "clause_2_result": {
+            "met": True,
+            "reasoning": "Somewhat confident",
+            "confidence": 0.6,
+        },
     }

@@ -34,9 +34,6 @@ All LLM nodes accept a `model` parameter to specify which LLM to use. Each node 
 
 | Node | Description | Actions |
 |------|-------------|---------|
-| **CriterionEvaluationNode** | Evaluate single criterion | `default` |
-| **SubCriterionNode** | Evaluate sub-criteria | `default` |
-| **ResultAggregatorNode** | Aggregate with AND/OR logic | `default` |
 | **ConfidenceGateNode** | Route by confidence | `high_confidence`, `needs_review`, `low_confidence` |
 
 ## Shared Store Keys
@@ -53,8 +50,9 @@ All LLM nodes accept a `model` parameter to specify which LLM to use. Each node 
 - `classification` - ClassifierNode result
 - `sentiment` - SentimentNode result
 - `extracted_data` - DataExtractorNode result
-- `criterion_results` - List of criterion evaluations
-- `evaluation_result` - Final aggregated result
+- `clause_X_X_result` - Result for clause with ID X.X
+- `confidence_gate_result` - ConfidenceGateNode result
+- `result` - Final EvaluationResult object
 
 ## Creating a Custom Node
 
@@ -231,17 +229,14 @@ workflow:
 ### Result Traceability
 
 ```python
-from policyflow.clause_mapping import (
-    ClauseResult,
-    extract_clause_results,
-    format_clause_results_report,
-    summarize_results,
-)
+from policyflow import EvaluationResult, ClauseResult
 
-# After workflow execution
-results = extract_clause_results(shared, normalized_policy)
-print(format_clause_results_report(results))
-# [+] Clause 1.1: PASS (92%)
-#   [+] Clause 1.1.a: PASS (95%)
-#   [-] Clause 1.1.b: FAIL (88%)
+# After workflow execution, results are available in shared["result"]
+result: EvaluationResult = shared["result"]
+
+# Access per-clause breakdown
+for cr in result.clause_results:
+    status = "PASS" if cr.met else "FAIL"
+    print(f"Clause {cr.clause_id}: {status} ({cr.confidence:.0%})")
+    print(f"  Reasoning: {cr.reasoning}")
 ```

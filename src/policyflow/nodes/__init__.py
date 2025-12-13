@@ -4,9 +4,6 @@ from .schema import NodeSchema, NodeParameter
 from .registry import register_node, get_node_class, get_parser_schemas, get_all_nodes
 
 from .llm_node import LLMNode
-from .criterion import CriterionEvaluationNode
-from .aggregate import ResultAggregatorNode
-from .subcriterion import SubCriterionNode
 from .confidence_gate import ConfidenceGateNode
 from .transform import TransformNode
 from .length_gate import LengthGateNode
@@ -19,9 +16,6 @@ from .sentiment import SentimentNode
 
 # Register all nodes
 register_node(LLMNode)
-register_node(CriterionEvaluationNode)
-register_node(ResultAggregatorNode)
-register_node(SubCriterionNode)
 register_node(ConfidenceGateNode)
 register_node(TransformNode)
 register_node(LengthGateNode)
@@ -43,9 +37,6 @@ __all__ = [
     "get_all_nodes",
     # Nodes
     "LLMNode",
-    "CriterionEvaluationNode",
-    "ResultAggregatorNode",
-    "SubCriterionNode",
     "ConfidenceGateNode",
     "TransformNode",
     "LengthGateNode",
