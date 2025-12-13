@@ -353,6 +353,10 @@ def _print_pretty_result(result: EvaluationResult):
 
 def main():
     """Entry point for the CLI."""
+    # Register benchmark commands
+    from policyflow.benchmark.cli import register_benchmark_commands
+    register_benchmark_commands(app)
+
     app()
 
 

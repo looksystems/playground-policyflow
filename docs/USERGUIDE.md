@@ -8,8 +8,10 @@ A generic policy evaluation tool that uses LLM-powered workflows to check if tex
 - [Quick Start](#quick-start)
 - [Writing Policies](#writing-policies)
 - [CLI Reference](#cli-reference)
+  - [Benchmark Commands](#benchmark-commands)
 - [Two-Step Parser](#two-step-parser)
 - [Python API](#python-api)
+- [Benchmarking API](#benchmarking-api)
 - [Configuration](#configuration)
 - [Workflow Caching](#workflow-caching)
 - [Understanding Results](#understanding-results)
@@ -208,6 +210,158 @@ policyflow batch [OPTIONS]
 **Example:**
 ```bash
 policyflow batch -w workflow.yaml --inputs texts.yaml -o results.yaml
+```
+
+### Benchmark Commands
+
+The benchmark system provides commands for testing and improving workflow accuracy.
+
+#### generate-dataset - Generate test dataset from policy
+
+```bash
+policyflow generate-dataset [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--policy` | Path to normalized policy YAML (required) |
+| `--output` | Output path for golden dataset (required) |
+| `--cases-per-criterion` | Number of test cases per criterion (default: 3) |
+| `--include-edge-cases` | Include edge case test cases |
+| `--strategies` | Edge case strategies (comma-separated) |
+| `--mode` | Generation mode: `template`, `llm`, `hybrid` |
+| `--model` | LLM model for hybrid/llm mode |
+
+**Example:**
+```bash
+policyflow generate-dataset --policy normalized.yaml \
+    --cases-per-criterion 5 \
+    --include-edge-cases \
+    --output golden_dataset.yaml
+```
+
+#### benchmark - Run benchmark against test dataset
+
+```bash
+policyflow benchmark [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--workflow` | Path to workflow YAML (required) |
+| `--dataset` | Path to golden dataset YAML (required) |
+| `--output` | Output path for benchmark report |
+| `--model` | LLM model for evaluation |
+
+**Example:**
+```bash
+policyflow benchmark --workflow workflow.yaml --dataset golden_dataset.yaml --output report.yaml
+```
+
+#### analyze - Analyze benchmark failures
+
+```bash
+policyflow analyze [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--report` | Path to benchmark report (required) |
+| `--workflow` | Path to workflow YAML (required) |
+| `--output` | Output path for analysis report |
+| `--mode` | Analysis mode: `rule_based`, `llm`, `hybrid` |
+| `--model` | LLM model for hybrid/llm mode |
+
+**Example:**
+```bash
+policyflow analyze --report report.yaml --workflow workflow.yaml --mode hybrid --output analysis.yaml
+```
+
+#### hypothesize - Generate improvement hypotheses
+
+```bash
+policyflow hypothesize [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--analysis` | Path to analysis report (required) |
+| `--workflow` | Path to workflow YAML (required) |
+| `--output` | Output path for hypotheses |
+| `--mode` | Generation mode: `template`, `llm`, `hybrid` |
+| `--model` | LLM model for hybrid/llm mode |
+
+**Example:**
+```bash
+policyflow hypothesize --analysis analysis.yaml --workflow workflow.yaml --output hypotheses.yaml
+```
+
+#### optimize - Automated workflow optimization
+
+```bash
+policyflow optimize [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--workflow` | Path to workflow YAML (required) |
+| `--dataset` | Path to golden dataset (required) |
+| `--output` | Output path for optimized workflow (required) |
+| `--max-iterations` | Maximum optimization iterations (default: 10) |
+| `--max-llm-calls` | Maximum LLM calls budget |
+| `--target-accuracy` | Stop when accuracy reaches this value |
+| `--patience` | Stop after N iterations without improvement |
+| `--model` | LLM model for analysis/hypothesis |
+
+**Example:**
+```bash
+policyflow optimize --workflow workflow.yaml --dataset golden_dataset.yaml \
+    --max-iterations 10 \
+    --target-accuracy 0.95 \
+    --patience 3 \
+    --output optimized_workflow.yaml
+```
+
+#### improve - Full improvement loop (benchmark + analyze + hypothesize)
+
+```bash
+policyflow improve [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--workflow` | Path to workflow YAML (required) |
+| `--dataset` | Path to golden dataset (required) |
+| `--mode` | Analysis mode: `rule_based`, `llm`, `hybrid` |
+| `--model` | LLM model for analysis/hypothesis |
+
+**Example:**
+```bash
+policyflow improve --workflow workflow.yaml --dataset golden_dataset.yaml --mode hybrid
+```
+
+#### experiments - Manage experiment history
+
+```bash
+policyflow experiments [SUBCOMMAND]
+```
+
+**Subcommands:**
+- `list` - List all experiments
+- `compare EXP1 EXP2` - Compare two experiments
+- `best` - Show best performing experiment
+
+**Example:**
+```bash
+policyflow experiments list
+policyflow experiments compare baseline exp_001
+policyflow experiments best
 ```
 
 ## Two-Step Parser
@@ -448,6 +602,183 @@ workflow = ParsedWorkflowPolicy.load_yaml("workflow.yaml")
 
 # Convert to YAML string
 yaml_str = result.to_yaml()
+```
+
+## Benchmarking API
+
+The benchmark system provides a Python API for measuring and improving workflow accuracy.
+
+### Running Benchmarks
+
+```python
+from policyflow.benchmark import (
+    load_golden_dataset,
+    SimpleBenchmarkRunner,
+    BenchmarkConfig,
+)
+from policyflow.models import ParsedWorkflowPolicy
+
+# Load dataset and workflow
+dataset = load_golden_dataset("golden_dataset.yaml")
+workflow = ParsedWorkflowPolicy.load_yaml("workflow.yaml")
+
+# Configure and run benchmark
+config = BenchmarkConfig(workflow_id=workflow.title)
+runner = SimpleBenchmarkRunner(config)
+report = runner.run(workflow, dataset.test_cases)
+
+# View results
+print(f"Overall Accuracy: {report.metrics.overall_accuracy:.2%}")
+for crit_id, metrics in report.metrics.criterion_metrics.items():
+    print(f"  {crit_id}: P={metrics.precision:.2f} R={metrics.recall:.2f} F1={metrics.f1:.2f}")
+```
+
+### Analyzing Failures
+
+```python
+from policyflow.benchmark import create_analyzer
+
+# Create analyzer (rule-based, llm, or hybrid)
+analyzer = create_analyzer(
+    mode="hybrid",  # or "rule_based", "llm"
+    model="anthropic/claude-sonnet-4-20250514"  # optional, for hybrid/llm mode
+)
+
+# Analyze the benchmark report
+analysis = analyzer.analyze(report, workflow)
+
+# View patterns
+for pattern in analysis.patterns:
+    print(f"[{pattern.severity}] {pattern.pattern_type}: {pattern.description}")
+
+# View recommendations
+for rec in analysis.recommendations:
+    print(f"  - {rec}")
+```
+
+### Generating Hypotheses
+
+```python
+from policyflow.benchmark import create_hypothesis_generator
+
+# Create hypothesis generator
+generator = create_hypothesis_generator(
+    mode="hybrid",  # or "template", "llm"
+    model="anthropic/claude-sonnet-4-20250514"  # optional
+)
+
+# Generate improvement hypotheses
+hypotheses = generator.generate(analysis, workflow)
+
+for h in hypotheses:
+    print(f"[{h.change_type}] {h.description}")
+    print(f"  Target: {h.target}")
+    print(f"  Change: {h.suggested_change}")
+    print(f"  Rationale: {h.rationale}")
+```
+
+### Automated Optimization
+
+```python
+from policyflow.benchmark import (
+    HillClimbingOptimizer,
+    OptimizationBudget,
+    create_analyzer,
+    create_hypothesis_generator,
+    BasicHypothesisApplier,
+)
+
+# Configure budget
+budget = OptimizationBudget(
+    max_iterations=10,
+    max_llm_calls=100,
+    target_metric=0.95,  # Stop when accuracy reaches 95%
+    patience=3  # Stop after 3 iterations without improvement
+)
+
+# Create optimizer
+optimizer = HillClimbingOptimizer(
+    analyzer=create_analyzer(mode="hybrid"),
+    hypothesis_generator=create_hypothesis_generator(mode="hybrid"),
+    hypothesis_applier=BasicHypothesisApplier()
+)
+
+# Run optimization
+result = optimizer.optimize(
+    workflow=workflow,
+    dataset=dataset,
+    budget=budget,
+    metric=lambda r: r.metrics.overall_accuracy
+)
+
+# View results
+print(f"Converged: {result.converged} ({result.convergence_reason})")
+print(f"Best Accuracy: {result.best_metric:.2%}")
+print(f"Iterations: {len(result.history)}")
+
+# Save optimized workflow
+result.best_workflow.save_yaml("optimized_workflow.yaml")
+```
+
+### Experiment Tracking
+
+```python
+from policyflow.benchmark import FileBasedExperimentTracker, Experiment
+from pathlib import Path
+from datetime import datetime
+
+# Create tracker
+tracker = FileBasedExperimentTracker(Path("experiments/"))
+
+# Record experiment
+experiment = Experiment(
+    id="exp_001",
+    timestamp=datetime.now(),
+    workflow_snapshot=workflow.to_yaml(),
+    hypothesis_applied=None,  # or the hypothesis that was applied
+    benchmark_report=report,
+    parent_experiment_id=None  # or parent experiment ID for lineage
+)
+tracker.record(experiment)
+
+# Get history and best
+history = tracker.get_history()
+best = tracker.get_best()
+print(f"Best experiment: {best.id} with accuracy {best.accuracy:.2%}")
+
+# Compare experiments
+comparison = tracker.compare("exp_001", "exp_002")
+print(f"Accuracy diff: {comparison['accuracy_diff']:.2%}")
+```
+
+### Generating Test Datasets
+
+```python
+from policyflow.benchmark import create_generator, GeneratorConfig
+from policyflow.models import NormalizedPolicy
+
+# Load normalized policy
+policy = NormalizedPolicy.load_yaml("normalized.yaml")
+
+# Configure generator
+config = GeneratorConfig(
+    cases_per_criterion=5,
+    include_edge_cases=True,
+    edge_case_strategies=["boundary", "negation", "implicit"],
+    mode="hybrid"
+)
+
+# Create generator
+generator = create_generator(
+    mode="hybrid",
+    model="anthropic/claude-sonnet-4-20250514"  # optional
+)
+
+# Generate dataset
+dataset = generator.generate(policy, config)
+
+# Save dataset
+dataset.save_yaml("golden_dataset.yaml")
 ```
 
 ## Configuration

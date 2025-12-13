@@ -406,6 +406,84 @@ PHOENIX_ENABLED=true uv run policyflow eval -p policy.md -i "text"
 
 See [plans/ARIZE_PHOENIX.md](plans/ARIZE_PHOENIX.md) for full documentation.
 
+## Benchmarking & Self-Improvement
+
+Policyflow includes a comprehensive benchmarking system for measuring and improving workflow accuracy.
+
+### Quick Start
+
+```bash
+# Generate test dataset from normalized policy
+uv run policyflow generate-dataset --policy normalized.yaml --output golden_dataset.yaml
+
+# Run benchmark against the dataset
+uv run policyflow benchmark --workflow workflow.yaml --dataset golden_dataset.yaml --output report.yaml
+
+# Analyze failures and get improvement recommendations
+uv run policyflow analyze --report report.yaml --workflow workflow.yaml --output analysis.yaml
+
+# Generate hypotheses for improvement
+uv run policyflow hypothesize --analysis analysis.yaml --workflow workflow.yaml --output hypotheses.yaml
+
+# Or run the full improvement loop at once
+uv run policyflow improve --workflow workflow.yaml --dataset golden_dataset.yaml
+```
+
+### Automated Optimization
+
+```bash
+# Run optimization with budget constraints
+uv run policyflow optimize --workflow workflow.yaml --dataset golden_dataset.yaml \
+    --max-iterations 10 \
+    --target-accuracy 0.95 \
+    --output optimized_workflow.yaml
+```
+
+### Python API
+
+```python
+from policyflow.benchmark import (
+    load_golden_dataset,
+    SimpleBenchmarkRunner,
+    BenchmarkConfig,
+    create_analyzer,
+    create_hypothesis_generator,
+    HillClimbingOptimizer,
+    OptimizationBudget,
+)
+
+# Load dataset and workflow
+dataset = load_golden_dataset("golden_dataset.yaml")
+workflow = load_workflow("workflow.yaml")
+
+# Run benchmark
+runner = SimpleBenchmarkRunner(BenchmarkConfig())
+report = runner.run(workflow, dataset.test_cases)
+print(f"Accuracy: {report.metrics.overall_accuracy:.2%}")
+
+# Analyze failures (with optional LLM enhancement)
+analyzer = create_analyzer(mode="hybrid", model="anthropic/claude-sonnet-4-20250514")
+analysis = analyzer.analyze(report, workflow)
+
+# Generate improvement hypotheses
+generator = create_hypothesis_generator(mode="hybrid", model="anthropic/claude-sonnet-4-20250514")
+hypotheses = generator.generate(analysis, workflow)
+
+for h in hypotheses:
+    print(f"- [{h.change_type}] {h.description}")
+```
+
+### Features
+
+- **Golden Dataset Generation**: Template-based and LLM-enhanced test case generation
+- **Comprehensive Metrics**: Per-criterion accuracy, precision, recall, F1, and confidence calibration
+- **Failure Analysis**: Rule-based and LLM-enhanced pattern detection
+- **Hypothesis Generation**: Actionable improvement suggestions with template and LLM modes
+- **Automated Optimization**: Hill-climbing optimizer with configurable budget constraints
+- **Experiment Tracking**: YAML-based tracking with history and comparison
+
+See [plans/BENCHMARK_SYSTEM.md](plans/BENCHMARK_SYSTEM.md) for full documentation.
+
 ## Testing
 
 Install dev dependencies:
