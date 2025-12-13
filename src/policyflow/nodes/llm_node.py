@@ -37,13 +37,20 @@ class LLMNode(Node):
 
         Args:
             config: Workflow configuration
-            model: LLM model identifier (uses class default_model if not provided)
+            model: LLM model identifier (uses config-based default if not provided)
             cache_ttl: Cache time-to-live in seconds, 0 = disabled
             rate_limit: Requests per minute, None = unlimited
         """
         super().__init__(max_retries=config.max_retries)
         self.config = config
-        self.model = model if model is not None else self.default_model
+
+        # Model selection hierarchy: explicit param > config for node type > class default
+        if model is not None:
+            self.model = model
+        else:
+            node_type = self.__class__.__name__
+            self.model = config.models.get_model_for_node_type(node_type)
+
         self.cache_ttl = cache_ttl  # seconds, 0 = disabled
         self.rate_limit = rate_limit  # requests per minute, None = unlimited
         self._instance_id = id(self)  # Unique ID for rate limiting

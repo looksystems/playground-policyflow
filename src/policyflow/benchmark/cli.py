@@ -199,6 +199,10 @@ def analyze_cmd(
         str,
         typer.Option("--mode", help="Analysis mode: rule_based, llm, or hybrid"),
     ] = "hybrid",
+    model: Annotated[
+        str | None,
+        typer.Option("--model", "-m", help="Model to use for analysis"),
+    ] = None,
 ):
     """Analyze benchmark failures to identify patterns."""
     if ctx.invoked_subcommand is not None:
@@ -213,8 +217,14 @@ def analyze_cmd(
         workflow_data = yaml.safe_load(f)
     parsed_workflow = ParsedWorkflowPolicy.model_validate(workflow_data)
 
+    # Determine effective model
+    workflow_config = WorkflowConfig()
+    effective_model = model or workflow_config.models.get_model_for_task("analyze")
+
     # Analyze
-    analyzer = create_analyzer(mode=mode)
+    analyzer = create_analyzer(
+        mode=mode, model=effective_model if mode in ("llm", "hybrid") else None
+    )
 
     with console.status("Analyzing failures..."):
         analysis = analyzer.analyze(benchmark_report, parsed_workflow)
@@ -304,6 +314,10 @@ def hypothesize_cmd(
         str,
         typer.Option("--mode", help="Generation mode: template, llm, or hybrid"),
     ] = "hybrid",
+    model: Annotated[
+        str | None,
+        typer.Option("--model", "-m", help="Model to use for hypothesis generation"),
+    ] = None,
 ):
     """Generate improvement hypotheses from analysis."""
     if ctx.invoked_subcommand is not None:
@@ -320,8 +334,14 @@ def hypothesize_cmd(
         workflow_data = yaml.safe_load(f)
     parsed_workflow = ParsedWorkflowPolicy.model_validate(workflow_data)
 
+    # Determine effective model
+    workflow_config = WorkflowConfig()
+    effective_model = model or workflow_config.models.get_model_for_task("hypothesize")
+
     # Generate hypotheses
-    generator = create_hypothesis_generator(mode=mode)
+    generator = create_hypothesis_generator(
+        mode=mode, model=effective_model if mode in ("llm", "hybrid") else None
+    )
 
     with console.status("Generating hypotheses..."):
         hypotheses = generator.generate(analysis_report, parsed_workflow)
@@ -486,6 +506,10 @@ def generate_dataset_cmd(
         str,
         typer.Option("--mode", help="Generation mode: template, llm, or hybrid"),
     ] = "hybrid",
+    model: Annotated[
+        str | None,
+        typer.Option("--model", "-m", help="Model to use for generation"),
+    ] = None,
 ):
     """Generate golden dataset from a normalized policy."""
     if ctx.invoked_subcommand is not None:
@@ -509,8 +533,14 @@ def generate_dataset_cmd(
         mode=mode,
     )
 
+    # Determine effective model
+    workflow_config = WorkflowConfig()
+    effective_model = model or workflow_config.models.get_model_for_task("generate")
+
     # Generate dataset
-    generator = create_generator(mode=mode)
+    generator = create_generator(
+        mode=mode, model=effective_model if mode in ("llm", "hybrid") else None
+    )
 
     with console.status(f"Generating dataset with {cases_per_criterion} cases per criterion..."):
         dataset = generator.generate(normalized_policy, config)
@@ -585,6 +615,10 @@ def optimize_cmd(
         int | None,
         typer.Option("--limit", "-l", help="Limit number of test cases to run"),
     ] = None,
+    model: Annotated[
+        str | None,
+        typer.Option("--model", "-m", help="Model to use for optimization"),
+    ] = None,
 ):
     """Run optimization loop to improve workflow accuracy."""
     if ctx.invoked_subcommand is not None:
@@ -609,6 +643,10 @@ def optimize_cmd(
         golden_dataset = GoldenDataset(test_cases=limited_cases)
         console.print(f"[dim]Limited to {len(limited_cases)} test cases[/dim]")
 
+    # Determine effective model
+    workflow_config = WorkflowConfig()
+    effective_model = model or workflow_config.models.get_model_for_task("optimize")
+
     # Configure optimizer
     budget = OptimizationBudget(
         max_iterations=max_iterations,
@@ -616,7 +654,7 @@ def optimize_cmd(
         patience=patience,
     )
 
-    optimizer = create_optimizer()
+    optimizer = create_optimizer(model=effective_model)
 
     console.print(
         Panel(

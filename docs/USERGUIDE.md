@@ -13,6 +13,7 @@ A generic policy evaluation tool that uses LLM-powered workflows to check if tex
 - [Python API](#python-api)
 - [Benchmarking API](#benchmarking-api)
 - [Configuration](#configuration)
+- [Model Configuration](#model-configuration)
 - [Workflow Caching](#workflow-caching)
 - [Understanding Results](#understanding-results)
 - [Best Practices](#best-practices)
@@ -820,6 +821,124 @@ policyflow eval -p policy.md -i "text" -m openai/gpt-4o
 # Azure OpenAI
 policyflow eval -p policy.md -i "text" -m azure/gpt-4
 ```
+
+## Model Configuration
+
+PolicyFlow supports flexible model configuration at multiple levels, allowing you to optimize cost and performance for different tasks.
+
+### Configuration Levels
+
+#### 1. Global Default
+Set a default model for all operations:
+```bash
+export POLICY_EVAL_MODEL="anthropic/claude-sonnet-4-20250514"
+```
+
+#### 2. Node Type Defaults
+Configure different models for specific node types in workflows:
+```bash
+export CLASSIFIER_MODEL="anthropic/claude-haiku-3-5-20250318"  # Fast model for classification
+export SENTIMENT_MODEL="anthropic/claude-haiku-3-5-20250318"   # Fast model for sentiment
+export DATA_EXTRACTOR_MODEL="anthropic/claude-opus-4-5-20251101"  # Powerful model for extraction
+```
+
+#### 3. CLI Task Defaults
+Configure different models for benchmark operations:
+```bash
+export GENERATE_MODEL="anthropic/claude-opus-4-5-20251101"  # High quality test generation
+export ANALYZE_MODEL="anthropic/claude-sonnet-4-20250514"   # Balanced analysis
+export HYPOTHESIZE_MODEL="anthropic/claude-opus-4-5-20251101"  # Creative hypothesis generation
+```
+
+#### 4. Runtime Overrides
+Override model for specific operations:
+```bash
+# Override model for dataset generation
+policyflow generate-dataset --policy n.yaml -o dataset.yaml --model anthropic/claude-opus-4-5-20251101
+
+# Override model for analysis
+policyflow analyze -r report.yaml -w workflow.yaml --model anthropic/claude-opus-4-5-20251101
+```
+
+#### 5. Workflow-Level Overrides
+Specify model for individual nodes in workflow.yaml:
+```yaml
+workflow:
+  nodes:
+    - id: classifier
+      type: ClassifierNode
+      params:
+        categories: [approve, reject, review]
+        model: anthropic/claude-opus-4-5-20251101  # Use powerful model for this classifier
+```
+
+### Model Selection Priority
+
+When PolicyFlow needs a model, it uses this priority order (highest to lowest):
+
+1. **Explicit parameter**: `model` in workflow.yaml or CLI `--model` flag
+2. **Type-specific env var**: `CLASSIFIER_MODEL`, `GENERATE_MODEL`, etc.
+3. **Global default**: `POLICY_EVAL_MODEL`
+4. **Hardcoded fallback**: `anthropic/claude-sonnet-4-20250514`
+
+### Using Local Models (LMStudio)
+
+PolicyFlow supports local models via LMStudio's OpenAI-compatible API:
+
+1. **Start LMStudio** and load a model
+2. **Enable the OpenAI-compatible server** (usually on `http://localhost:1234`)
+3. **Configure environment variables**:
+
+```bash
+export OPENAI_API_BASE="http://localhost:1234/v1"
+export POLICY_EVAL_MODEL="openai/your-model-name"
+```
+
+Example with different local models:
+```bash
+export OPENAI_API_BASE="http://localhost:1234/v1"
+export POLICY_EVAL_MODEL="openai/llama-3-8b"
+export CLASSIFIER_MODEL="openai/llama-3-8b"
+export ANALYZE_MODEL="openai/mixtral-8x7b"  # More powerful for analysis
+```
+
+### Cost Optimization Strategies
+
+**Strategy 1: Fast models for simple tasks**
+```bash
+export POLICY_EVAL_MODEL="anthropic/claude-sonnet-4-20250514"  # Default
+export CLASSIFIER_MODEL="anthropic/claude-haiku-3-5-20250318"  # Faster/cheaper
+export SENTIMENT_MODEL="anthropic/claude-haiku-3-5-20250318"   # Faster/cheaper
+```
+
+**Strategy 2: Powerful models for complex tasks**
+```bash
+export POLICY_EVAL_MODEL="anthropic/claude-sonnet-4-20250514"  # Default
+export DATA_EXTRACTOR_MODEL="anthropic/claude-opus-4-5-20251101"  # Complex extraction
+export ANALYZE_MODEL="anthropic/claude-opus-4-5-20251101"  # Deep analysis
+```
+
+**Strategy 3: Local models for development**
+```bash
+export OPENAI_API_BASE="http://localhost:1234/v1"
+export POLICY_EVAL_MODEL="openai/llama-3-8b"  # Local model for development
+export GENERATE_MODEL="anthropic/claude-opus-4-5-20251101"  # Cloud model for production generation
+```
+
+### Available Model Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `POLICY_EVAL_MODEL` | Global default | `anthropic/claude-sonnet-4-20250514` |
+| `CLASSIFIER_MODEL` | ClassifierNode | Falls back to global |
+| `DATA_EXTRACTOR_MODEL` | DataExtractorNode | Falls back to global |
+| `SENTIMENT_MODEL` | SentimentNode | Falls back to global |
+| `SAMPLER_MODEL` | SamplerNode | Falls back to global |
+| `GENERATE_MODEL` | generate-dataset command | Falls back to global |
+| `ANALYZE_MODEL` | analyze command | Falls back to global |
+| `HYPOTHESIZE_MODEL` | hypothesize command | Falls back to global |
+| `OPTIMIZE_MODEL` | optimize command | Falls back to global |
+| `OPENAI_API_BASE` | OpenAI-compatible endpoint | - |
 
 ## Workflow Caching
 

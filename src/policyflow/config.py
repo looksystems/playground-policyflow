@@ -99,6 +99,75 @@ class PhoenixConfig(BaseModel):
     )
 
 
+class ModelConfig(BaseModel):
+    """Configuration for model selection at different levels."""
+
+    # Global default
+    default_model: str = Field(
+        default_factory=lambda: os.getenv(
+            "POLICY_EVAL_MODEL",
+            "anthropic/claude-sonnet-4-20250514"
+        ),
+        description="Global default model for all operations"
+    )
+
+    # Node type defaults
+    classifier_model: str | None = Field(
+        default_factory=lambda: os.getenv("CLASSIFIER_MODEL"),
+        description="Default model for ClassifierNode"
+    )
+    data_extractor_model: str | None = Field(
+        default_factory=lambda: os.getenv("DATA_EXTRACTOR_MODEL"),
+        description="Default model for DataExtractorNode"
+    )
+    sentiment_model: str | None = Field(
+        default_factory=lambda: os.getenv("SENTIMENT_MODEL"),
+        description="Default model for SentimentNode"
+    )
+    sampler_model: str | None = Field(
+        default_factory=lambda: os.getenv("SAMPLER_MODEL"),
+        description="Default model for SamplerNode"
+    )
+
+    # CLI task defaults
+    generate_model: str | None = Field(
+        default_factory=lambda: os.getenv("GENERATE_MODEL"),
+        description="Default model for generate-dataset command"
+    )
+    analyze_model: str | None = Field(
+        default_factory=lambda: os.getenv("ANALYZE_MODEL"),
+        description="Default model for analyze command"
+    )
+    hypothesize_model: str | None = Field(
+        default_factory=lambda: os.getenv("HYPOTHESIZE_MODEL"),
+        description="Default model for hypothesize command"
+    )
+    optimize_model: str | None = Field(
+        default_factory=lambda: os.getenv("OPTIMIZE_MODEL"),
+        description="Default model for optimize command"
+    )
+
+    def get_model_for_node_type(self, node_type: str) -> str:
+        """Get model for a specific node type with fallback to default."""
+        mapping = {
+            "ClassifierNode": self.classifier_model,
+            "DataExtractorNode": self.data_extractor_model,
+            "SentimentNode": self.sentiment_model,
+            "SamplerNode": self.sampler_model,
+        }
+        return mapping.get(node_type) or self.default_model
+
+    def get_model_for_task(self, task: str) -> str:
+        """Get model for a specific CLI task with fallback to default."""
+        mapping = {
+            "generate": self.generate_model,
+            "analyze": self.analyze_model,
+            "hypothesize": self.hypothesize_model,
+            "optimize": self.optimize_model,
+        }
+        return mapping.get(task) or self.default_model
+
+
 class WorkflowConfig(BaseModel):
     """Configuration for the evaluation workflow."""
 
@@ -129,6 +198,10 @@ class WorkflowConfig(BaseModel):
     phoenix: PhoenixConfig = Field(
         default_factory=PhoenixConfig,
         description="Phoenix observability configuration",
+    )
+    models: ModelConfig = Field(
+        default_factory=ModelConfig,
+        description="Model selection configuration",
     )
 
 

@@ -308,6 +308,7 @@ def create_optimizer(
     mode: Literal["hill_climbing"] = "hill_climbing",
     analyzer_mode: Literal["rule_based", "llm", "hybrid"] = "hybrid",
     hypothesis_mode: Literal["template", "llm", "hybrid"] = "hybrid",
+    model: str | None = None,
 ) -> HillClimbingOptimizer:
     """Factory function to create an optimizer.
 
@@ -315,6 +316,7 @@ def create_optimizer(
         mode: Optimizer mode (currently only "hill_climbing" supported)
         analyzer_mode: Mode for the failure analyzer
         hypothesis_mode: Mode for the hypothesis generator
+        model: LLM model identifier for analyzer and hypothesis generator
 
     Returns:
         Configured optimizer instance
@@ -324,8 +326,8 @@ def create_optimizer(
     """
     if mode == "hill_climbing":
         return HillClimbingOptimizer(
-            analyzer=create_analyzer(analyzer_mode),
-            hypothesis_generator=create_hypothesis_generator(hypothesis_mode),
+            analyzer=create_analyzer(analyzer_mode, model=model),
+            hypothesis_generator=create_hypothesis_generator(hypothesis_mode, model=model),
             hypothesis_applier=create_applier(),
         )
     else:

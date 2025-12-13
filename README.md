@@ -55,6 +55,45 @@ POLICY_EVAL_CONFIDENCE_LOW=0.5    # Below this = needs review
 | `PHOENIX_ENABLED` | `false` | Enable Arize Phoenix tracing |
 | `PHOENIX_COLLECTOR_ENDPOINT` | `http://localhost:6007` | Phoenix collector URL |
 | `PHOENIX_PROJECT_NAME` | `policyflowuator` | Project name in Phoenix UI |
+| `CLASSIFIER_MODEL` | `POLICY_EVAL_MODEL` | Default model for ClassifierNode |
+| `DATA_EXTRACTOR_MODEL` | `POLICY_EVAL_MODEL` | Default model for DataExtractorNode |
+| `SENTIMENT_MODEL` | `POLICY_EVAL_MODEL` | Default model for SentimentNode |
+| `SAMPLER_MODEL` | `POLICY_EVAL_MODEL` | Default model for SamplerNode |
+| `GENERATE_MODEL` | `POLICY_EVAL_MODEL` | Model for generate-dataset command |
+| `ANALYZE_MODEL` | `POLICY_EVAL_MODEL` | Model for analyze command |
+| `HYPOTHESIZE_MODEL` | `POLICY_EVAL_MODEL` | Model for hypothesize command |
+| `OPTIMIZE_MODEL` | `POLICY_EVAL_MODEL` | Model for optimize command |
+| `OPENAI_API_BASE` | - | OpenAI-compatible endpoint (for LMStudio) |
+
+### Multi-Level Model Configuration
+
+PolicyFlow supports configuring different models at multiple levels:
+
+**Node Type Defaults**: Configure different models for different node types
+```env
+CLASSIFIER_MODEL=anthropic/claude-sonnet-4-20250514
+SENTIMENT_MODEL=anthropic/claude-haiku-3-5-20250318  # Use faster model for sentiment
+DATA_EXTRACTOR_MODEL=anthropic/claude-opus-4-5-20251101  # Use powerful model for extraction
+```
+
+**CLI Task Defaults**: Configure different models for benchmark operations
+```env
+GENERATE_MODEL=anthropic/claude-opus-4-5-20251101  # Use powerful model for generation
+ANALYZE_MODEL=anthropic/claude-sonnet-4-20250514   # Use balanced model for analysis
+```
+
+**Local Models (LMStudio)**: Use OpenAI-compatible local models
+```env
+OPENAI_API_BASE=http://localhost:1234/v1
+CLASSIFIER_MODEL=openai/llama-3-8b
+SENTIMENT_MODEL=openai/mistral-7b
+```
+
+**Model Selection Priority** (highest to lowest):
+1. Explicit parameter in workflow.yaml or CLI `--model` flag
+2. Type-specific env var (e.g., `CLASSIFIER_MODEL`, `GENERATE_MODEL`)
+3. Global default (`POLICY_EVAL_MODEL`)
+4. Hardcoded fallback (`anthropic/claude-sonnet-4-20250514`)
 
 ## Usage
 

@@ -69,6 +69,7 @@ policyflow batch -p policy.md --inputs texts.yaml -o results.yaml
 policyflow generate-dataset --policy normalized.yaml --output dataset.yaml
 policyflow generate-dataset --policy n.yaml -o d.yaml --cases-per-criterion 5
 policyflow generate-dataset --policy n.yaml -o d.yaml --include-edge-cases --mode llm
+policyflow generate-dataset --policy n.yaml -o d.yaml --mode llm --model anthropic/claude-opus-4-5-20251101
 ```
 
 | Option | Description |
@@ -104,6 +105,7 @@ policyflow benchmark -w workflow.yaml -d dataset.yaml --limit 5  # Quick test
 ```bash
 policyflow analyze -r report.yaml -w workflow.yaml
 policyflow analyze -r report.yaml -w workflow.yaml --mode llm -o analysis.yaml
+policyflow analyze -r report.yaml -w workflow.yaml --mode llm --model anthropic/claude-opus-4-5-20251101 -o analysis.yaml
 ```
 
 | Option | Short | Description |
@@ -119,6 +121,7 @@ policyflow analyze -r report.yaml -w workflow.yaml --mode llm -o analysis.yaml
 ```bash
 policyflow hypothesize -a analysis.yaml -w workflow.yaml
 policyflow hypothesize -a analysis.yaml -w workflow.yaml -o hypotheses.yaml
+policyflow hypothesize -a analysis.yaml -w workflow.yaml --mode llm --model anthropic/claude-opus-4-5-20251101 -o hypotheses.yaml
 ```
 
 | Option | Short | Description |
@@ -134,6 +137,7 @@ policyflow hypothesize -a analysis.yaml -w workflow.yaml -o hypotheses.yaml
 ```bash
 policyflow optimize -w workflow.yaml -d dataset.yaml -o optimized.yaml
 policyflow optimize -w workflow.yaml -d dataset.yaml --max-iterations 10 --target 0.95
+policyflow optimize -w workflow.yaml -d dataset.yaml --model anthropic/claude-opus-4-5-20251101 -o optimized.yaml
 policyflow optimize -w workflow.yaml -d dataset.yaml --limit 1 --max-iterations 1  # Quick test
 ```
 
@@ -198,6 +202,14 @@ policyflow experiments compare exp_001 exp_002 # Compare two experiments
 | `PHOENIX_ENABLED` | `false` | Enable Phoenix tracing |
 | `PHOENIX_COLLECTOR_ENDPOINT` | `http://localhost:6007` | Phoenix endpoint |
 | `PHOENIX_PROJECT_NAME` | `policyflowuator` | Phoenix project |
+| `CLASSIFIER_MODEL` | `POLICY_EVAL_MODEL` | Default for ClassifierNode |
+| `DATA_EXTRACTOR_MODEL` | `POLICY_EVAL_MODEL` | Default for DataExtractorNode |
+| `SENTIMENT_MODEL` | `POLICY_EVAL_MODEL` | Default for SentimentNode |
+| `SAMPLER_MODEL` | `POLICY_EVAL_MODEL` | Default for SamplerNode |
+| `GENERATE_MODEL` | `POLICY_EVAL_MODEL` | Default for generate-dataset |
+| `ANALYZE_MODEL` | `POLICY_EVAL_MODEL` | Default for analyze |
+| `HYPOTHESIZE_MODEL` | `POLICY_EVAL_MODEL` | Default for hypothesize |
+| `OPTIMIZE_MODEL` | `POLICY_EVAL_MODEL` | Default for optimize |
 
 ## Common Workflows
 
