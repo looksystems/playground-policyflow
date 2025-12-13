@@ -1,62 +1,201 @@
-title: Personal Recommendation Definition
-description: Defines the criteria that constitute a personal recommendation in investment
-  contexts
-criteria:
-- id: criterion_1
-  name: Recipient Capacity
-  description: is made to a person in their capacity as
-  sub_criteria:
-  - id: criterion_1a
-    name: Investor Status
-    description: an investor or potential investor
-    sub_criteria: []
-    sub_logic: null
-  - id: criterion_1b
-    name: Agent Status
-    description: agent for an investor or a potential investor
-    sub_criteria: []
-    sub_logic: null
-  sub_logic: any
-- id: criterion_2
-  name: Investment Action
-  description: is for the person in (1) to do any of the following (whether as principal
-    or agent)
-  sub_criteria:
-  - id: criterion_2a
-    name: Trading Activities
-    description: buy, sell, subscribe for, exchange, redeem, hold or underwrite a
-      particular investment which is a security, a structured deposit or a relevant
-      investment
-    sub_criteria: []
-    sub_logic: null
-  - id: criterion_2b
-    name: Rights Exercise
-    description: exercise or not exercise any right conferred by such an investment
-      to buy, sell, subscribe for, exchange or redeem such an investment
-    sub_criteria: []
-    sub_logic: null
-  sub_logic: any
-- id: criterion_3
-  name: Personalization
-  description: is
-  sub_criteria:
-  - id: criterion_3a
-    name: Suitability Presentation
-    description: presented as suitable for the person to whom it is made
-    sub_criteria: []
-    sub_logic: null
-  - id: criterion_3b
-    name: Circumstance Consideration
-    description: based on a consideration of the circumstances of that person
-    sub_criteria: []
-    sub_logic: null
-  sub_logic: any
-- id: criterion_4
-  name: Distribution Scope
-  description: is not issued exclusively to the public
-  sub_criteria: []
-  sub_logic: null
-logic: all
+title: Personal Recommendation Definition Evaluation
+description: Evaluates whether content constitutes a personal recommendation based
+  on regulatory definition
+workflow:
+  nodes:
+  - id: preprocess
+    type: TransformNode
+    params:
+      transforms:
+      - normalize_whitespace
+      - strip_html
+      - truncate:5000
+    routes:
+      default: clause_1_1_a
+  - id: clause_1_1_a
+    type: ClassifierNode
+    params:
+      categories:
+      - matches
+      - not_matches
+      descriptions:
+        matches: Content is directed to someone as an investor or potential investor
+        not_matches: Content is not directed to someone as an investor or potential
+          investor
+    routes:
+      matches: clause_1_2_a
+      not_matches: clause_1_1_b
+  - id: clause_1_1_b
+    type: ClassifierNode
+    params:
+      categories:
+      - matches
+      - not_matches
+      descriptions:
+        matches: Content is directed to someone as an agent for an investor or potential
+          investor
+        not_matches: Content is not directed to someone as an agent for an investor
+          or potential investor
+    routes:
+      matches: clause_1_2_a
+      not_matches: requirement_failed
+  - id: clause_1_2_a
+    type: ClassifierNode
+    params:
+      categories:
+      - matches
+      - not_matches
+      descriptions:
+        matches: Content recommends investment activities like buying, selling, subscribing,
+          exchanging, redeeming, holding or underwriting securities, structured deposits
+          or relevant investments
+        not_matches: Content does not recommend investment activities like buying,
+          selling, subscribing, exchanging, redeeming, holding or underwriting securities,
+          structured deposits or relevant investments
+    routes:
+      matches: clause_1_3_a
+      not_matches: clause_1_2_b
+  - id: clause_1_2_b
+    type: ClassifierNode
+    params:
+      categories:
+      - matches
+      - not_matches
+      descriptions:
+        matches: Content recommends exercising or not exercising rights to buy, sell,
+          subscribe, exchange or redeem investments
+        not_matches: Content does not recommend exercising or not exercising rights
+          to buy, sell, subscribe, exchange or redeem investments
+    routes:
+      matches: clause_1_3_a
+      not_matches: requirement_failed
+  - id: clause_1_3_a
+    type: ClassifierNode
+    params:
+      categories:
+      - matches
+      - not_matches
+      descriptions:
+        matches: Content is presented as suitable for the specific person receiving
+          it
+        not_matches: Content is not presented as suitable for the specific person
+          receiving it
+    routes:
+      matches: clause_1_4
+      not_matches: clause_1_3_b
+  - id: clause_1_3_b
+    type: ClassifierNode
+    params:
+      categories:
+      - matches
+      - not_matches
+      descriptions:
+        matches: Content is based on consideration of the recipient's personal circumstances
+        not_matches: Content is not based on consideration of the recipient's personal
+          circumstances
+    routes:
+      matches: clause_1_4
+      not_matches: requirement_failed
+  - id: clause_1_4
+    type: ClassifierNode
+    params:
+      categories:
+      - matches
+      - not_matches
+      descriptions:
+        matches: Content is not issued exclusively to the public (i.e., it's targeted/personalized)
+        not_matches: Content is issued exclusively to the public (i.e., it's generic/mass
+          distribution)
+    routes:
+      matches: personal_recommendation_confirmed
+      not_matches: requirement_failed
+  - id: personal_recommendation_confirmed
+    type: DataExtractorNode
+    params:
+      schema:
+        facts:
+        - Content qualifies as a PERSONAL RECOMMENDATION under regulatory definition
+        - 'All four requirements satisfied: recipient capacity, investment action,
+          suitability basis, and non-public distribution'
+    routes: {}
+  - id: requirement_failed
+    type: DataExtractorNode
+    params:
+      schema:
+        facts:
+        - Content does NOT qualify as a personal recommendation
+        - One or more regulatory requirements not satisfied
+    routes: {}
+  start_node: preprocess
+  hierarchy:
+  - clause_number: '1.1'
+    clause_text: 'is made to a person in their capacity as:'
+    nodes:
+    - clause_1_1_a
+    - clause_1_1_b
+    sub_groups:
+    - clause_number: 1.1.a
+      clause_text: an investor or potential investor
+      nodes:
+      - clause_1_1_a
+      sub_groups: []
+      logic: null
+    - clause_number: 1.1.b
+      clause_text: agent for an investor or a potential investor
+      nodes:
+      - clause_1_1_b
+      sub_groups: []
+      logic: null
+    logic: any
+  - clause_number: '1.2'
+    clause_text: 'is for the person in (1) to do any of the following (whether as
+      principal or agent):'
+    nodes:
+    - clause_1_2_a
+    - clause_1_2_b
+    sub_groups:
+    - clause_number: 1.2.a
+      clause_text: buy, sell, subscribe for, exchange, redeem, hold or underwrite
+        a particular investment which is a security, a structured deposit or a relevant
+        investment
+      nodes:
+      - clause_1_2_a
+      sub_groups: []
+      logic: null
+    - clause_number: 1.2.b
+      clause_text: exercise or not exercise any right conferred by such an investment
+        to buy, sell, subscribe for, exchange or redeem such an investment
+      nodes:
+      - clause_1_2_b
+      sub_groups: []
+      logic: null
+    logic: any
+  - clause_number: '1.3'
+    clause_text: 'is:'
+    nodes:
+    - clause_1_3_a
+    - clause_1_3_b
+    sub_groups:
+    - clause_number: 1.3.a
+      clause_text: presented as suitable for the person to whom it is made
+      nodes:
+      - clause_1_3_a
+      sub_groups: []
+      logic: null
+    - clause_number: 1.3.b
+      clause_text: based on a consideration of the circumstances of that person
+      nodes:
+      - clause_1_3_b
+      sub_groups: []
+      logic: null
+    logic: any
+  - clause_number: '1.4'
+    clause_text: is not issued exclusively to the public
+    nodes:
+    - clause_1_4
+    sub_groups: []
+    logic: null
+normalized_policy_ref: null
 raw_text: 'A personal recommendation means a recommendation that:
 
 
