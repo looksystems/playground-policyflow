@@ -40,7 +40,7 @@ This document describes PolicyFlow's system architecture, data flow, and compone
 │  │                    External Dependencies                      │   │
 │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐  │   │
 │  │  │PocketFlow│  │ LiteLLM  │  │ Pydantic │  │   Phoenix   │  │   │
-│  │  │(workflow)│  │  (LLM)   │  │ (models) │  │(observability│  │   │
+│  │  │(workflow)│  │  (LLM)   │  │ (models) │  │(observation)│  │   │
 │  │  └──────────┘  └──────────┘  └──────────┘  └─────────────┘  │   │
 │  └──────────────────────────────────────────────────────────────┘   │
 │                                                                      │
