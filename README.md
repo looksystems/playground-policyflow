@@ -54,7 +54,7 @@ POLICY_EVAL_CONFIDENCE_LOW=0.5    # Below this = needs review
 | `POLICY_EVAL_THROTTLE_RPM` | `60` | Max requests per minute |
 | `PHOENIX_ENABLED` | `false` | Enable Arize Phoenix tracing |
 | `PHOENIX_COLLECTOR_ENDPOINT` | `http://localhost:6007` | Phoenix collector URL |
-| `PHOENIX_PROJECT_NAME` | `policyflowuator` | Project name in Phoenix UI |
+| `PHOENIX_PROJECT_NAME` | `policyflow` | Project name in Phoenix UI |
 | `CLASSIFIER_MODEL` | `POLICY_EVAL_MODEL` | Default model for ClassifierNode |
 | `DATA_EXTRACTOR_MODEL` | `POLICY_EVAL_MODEL` | Default model for DataExtractorNode |
 | `SENTIMENT_MODEL` | `POLICY_EVAL_MODEL` | Default model for SentimentNode |

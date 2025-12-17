@@ -94,7 +94,7 @@ class PhoenixConfig(BaseModel):
         description="Phoenix collector base URL (OTLP endpoint)",
     )
     project_name: str = Field(
-        default_factory=lambda: os.getenv("PHOENIX_PROJECT_NAME", "policyflowuator"),
+        default_factory=lambda: os.getenv("PHOENIX_PROJECT_NAME", "policyflow"),
         description="Project name in Phoenix UI",
     )
 
