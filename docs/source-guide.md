@@ -295,32 +295,65 @@ def get_parser_schemas() -> list[NodeSchema]:
 
 ## Adding a Custom Node
 
-### 1. Create the Node Class
+PolicyFlow provides two approaches for creating nodes, depending on complexity:
+
+### Simple Deterministic Nodes: Use DeterministicNode
+
+For nodes with standard input/output patterns, extend `DeterministicNode`:
+
+```python
+# src/policyflow/nodes/my_node.py
+from policyflow.nodes.base import DeterministicNode
+from policyflow.nodes.decorators import node_schema
+
+@node_schema(
+    description="What this node does",
+    category="deterministic",
+    actions=["pass", "fail"],
+    parser_exposed=True
+)
+class MyNode(DeterministicNode):
+    def __init__(self, threshold: float, mode: str = "strict"):
+        super().__init__()
+        self.threshold = threshold
+        self.mode = mode
+        self.output_key = "my_node_result"  # Optional: store result in shared store
+
+    def exec(self, prep_res: dict) -> dict:
+        # Your logic here
+        text = prep_res.get("input_text", "")
+        score = len(text) / 100
+        return {"score": score, "passed": score >= self.threshold}
+
+    def get_action(self, exec_res: dict) -> str:
+        return "pass" if exec_res["passed"] else "fail"
+```
+
+The `@node_schema` decorator automatically generates `parser_schema` from your `__init__` type hints.
+
+### Complex Nodes: Manual Implementation
+
+For nodes requiring custom prep/post logic:
 
 ```python
 # src/policyflow/nodes/my_node.py
 from pocketflow import Node
-from policyflow.nodes.schema import NodeSchema, NodeParameter
+from policyflow.nodes.decorators import node_schema
 
+@node_schema(
+    description="What this node does",
+    category="deterministic",
+    actions=["pass", "fail"],
+    parser_exposed=True
+)
 class MyNode(Node):
-    parser_schema = NodeSchema(
-        name="MyNode",
-        description="What this node does",
-        category="deterministic",  # or "llm"
-        parameters=[
-            NodeParameter("threshold", "float", "Score threshold", required=True),
-            NodeParameter("mode", "str", "Operation mode", required=False, default="strict"),
-        ],
-        actions=["pass", "fail"],
-        parser_exposed=True,
-    )
-
     def __init__(self, threshold: float, mode: str = "strict"):
         super().__init__()
         self.threshold = threshold
         self.mode = mode
 
     def prep(self, shared: dict) -> dict:
+        # Custom preparation logic
         return {"text": shared.get("input_text", "")}
 
     def exec(self, prep_res: dict) -> dict:
@@ -329,6 +362,7 @@ class MyNode(Node):
         return {"score": score, "passed": score >= self.threshold}
 
     def post(self, shared: dict, prep_res: dict, exec_res: dict) -> str:
+        # Custom post-processing logic
         shared["my_node_result"] = exec_res
         return "pass" if exec_res["passed"] else "fail"
 ```
@@ -345,28 +379,25 @@ register_node(MyNode)
 
 ### 3. Creating an LLM Node
 
+LLMNode provides built-in caching and rate limiting via CacheManager and RateLimiter:
+
 ```python
 from pydantic import BaseModel, Field
 from policyflow.nodes.llm_node import LLMNode
-from policyflow.nodes.schema import NodeSchema, NodeParameter
+from policyflow.nodes.decorators import node_schema
 
 class AnalysisResult(BaseModel):
     summary: str = Field(description="Analysis summary")
     score: float = Field(ge=0.0, le=1.0)
 
+@node_schema(
+    description="LLM-powered analysis",
+    category="llm",
+    actions=["high", "low"],
+    parser_exposed=True
+)
 class MyLLMNode(LLMNode):
     default_model: str = "anthropic/claude-sonnet-4-20250514"
-
-    parser_schema = NodeSchema(
-        name="MyLLMNode",
-        description="LLM-powered analysis",
-        category="llm",
-        parameters=[
-            NodeParameter("prompt", "str", "Analysis prompt"),
-        ],
-        actions=["high", "low"],
-        parser_exposed=True,
-    )
 
     def __init__(self, config, prompt: str, model: str | None = None):
         super().__init__(config=config, model=model)
@@ -376,6 +407,7 @@ class MyLLMNode(LLMNode):
         return {"text": shared.get("input_text", "")}
 
     def exec(self, prep_res: dict) -> dict:
+        # call_llm() automatically uses CacheManager and RateLimiter
         return self.call_llm(
             prompt=f"{self.prompt}\n\nText: {prep_res['text']}",
             system_prompt="Analyze the text and return YAML.",
@@ -387,6 +419,12 @@ class MyLLMNode(LLMNode):
         shared["my_analysis"] = exec_res
         return "high" if exec_res.get("score", 0) > 0.7 else "low"
 ```
+
+**Benefits of LLMNode**:
+- **CacheManager**: Thread-safe file-based caching with TTL support
+- **RateLimiter**: Token bucket algorithm prevents API rate limiting
+- **Automatic model selection**: Falls back through type-specific → global → hardcoded defaults
+- **Phoenix tracing**: Optional observability integration
 
 ## Numbering Utilities
 

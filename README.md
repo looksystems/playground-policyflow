@@ -15,6 +15,18 @@ Ideal for financial regulation compliance, content moderation, contract analysis
 - **Model-agnostic**: Uses LiteLLM to support 100+ LLM providers
 - **Configurable**: Environment-based configuration with `.env` support
 
+## Recent Improvements
+
+PolicyFlow recently underwent significant architectural improvements to reduce boilerplate and enhance maintainability:
+
+- **Reduced Boilerplate**: @node_schema decorator eliminates ~85% of node definition boilerplate
+- **Improved Abstractions**: Extracted CacheManager and RateLimiter for better separation of concerns
+- **Cleaner Configuration**: Migrated to pydantic-settings with cross-field validation
+- **Enhanced Testing**: Added 100 new tests (496 total), all passing
+- **Better Developer Experience**: DeterministicNode base class simplifies node creation
+
+These changes reduced ~372-450 lines of code while improving code quality and maintainability. See [plans/CODEBASE_IMPROVEMENTS.md](plans/CODEBASE_IMPROVEMENTS.md) for full details.
+
 ## Installation
 
 ```bash
