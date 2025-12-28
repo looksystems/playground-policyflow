@@ -1,7 +1,7 @@
 # Policyflow
 
 > [!WARNING]
-> This is an experimental/learning project only.
+> This is an experimental/learning project only - generated entirely by claude code.
 
 An LLM-powered compliance evaluation framework that automatically parses structured policy documents (in markdown) and evaluates any text against the extracted criteria. The system uses AI to intelligently extract requirements, sub-criteria, and logical relationships from policies, then builds dynamic evaluation workflows that provide granular pass/fail results with confidence scores and reasoning for each criterion.
 
